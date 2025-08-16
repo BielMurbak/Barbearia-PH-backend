@@ -1,6 +1,7 @@
 package com.barbearia.ph.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,7 +19,8 @@ public class ClienteEntity extends PessoaAbstract {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "cliente_id", nullable = false)
-    private ClienteEntity clienteEntity;
+
+    @OneToMany(mappedBy = "clienteEntity", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<AgendamentoEntity> agendamentos;
 }
