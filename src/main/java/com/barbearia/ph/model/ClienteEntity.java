@@ -21,6 +21,6 @@ public class ClienteEntity extends PessoaAbstract {
 
 
     @OneToMany(mappedBy = "clienteEntity", cascade = CascadeType.ALL)
-    @JsonIgnore
+     @JsonIgnore
     private List<AgendamentoEntity> agendamentos;
 }

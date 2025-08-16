@@ -1,5 +1,6 @@
 package com.barbearia.ph.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,5 +21,6 @@ public class ProfissionalEntity extends PessoaAbstract {
     private Especializacao especializacao;
 
     @OneToMany(mappedBy = "profissionalEntity", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<ProfissionalServicoEntity> profissionalServicos;
 }

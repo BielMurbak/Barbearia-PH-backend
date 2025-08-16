@@ -1,6 +1,7 @@
 package com.barbearia.ph.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,5 +21,6 @@ public class ServicoEntity {
     private int minDeDuracao;
 
     @OneToMany(mappedBy = "servicoEntity", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<ProfissionalServicoEntity> profissionalServicoEntity;
 }

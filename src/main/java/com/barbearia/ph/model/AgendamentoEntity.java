@@ -21,7 +21,7 @@ public class AgendamentoEntity {
 
     private LocalDate data;
     private String local;
-    private LocalDateTime horario;
+    private String horario;
 
     @ManyToOne
     @JoinColumn(name = "cliente_id", nullable = false)
