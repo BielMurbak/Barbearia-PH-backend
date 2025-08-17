@@ -187,15 +187,23 @@ Agendamentos
 
 .
 
-🛠 Modelo Entidade-Relacionamento (DER)
+🔗 Relacionamentos:
 
-Cliente (1) ⟶ (N) Agendamentos
+Cliente (1) ⟶ (N) Agendamento
+Um cliente pode realizar vários agendamentos.
 
 Profissional (1) ⟶ (N) ProfissionalServico
+Um profissional pode oferecer vários serviços.
 
 Servico (1) ⟶ (N) ProfissionalServico
+Um serviço pode ser oferecido por vários profissionais.
 
-ProfissionalServico (1) ⟶ (N) Agendamentos
+ProfissionalServico (1) ⟶ (N) Agendamento
+Um agendamento sempre referencia um par profissional/serviço.
+
+.
+
+🛠 Modelo Entidade-Relacionamento (DER)
 
 https://lucid.app/lucidchart/421d03fd-b098-464b-a9c6-e7eaaf58106f/edit?viewport_loc=-210%2C-11%2C2268%2C1101%2C0_0&invitationId=inv_4cbc99b5-9981-47e7-9e88-b94a0f07358a
 
@@ -230,5 +238,6 @@ Testes de API: Postman
 Gerenciador de build: Maven
 
 .
+
 
 
