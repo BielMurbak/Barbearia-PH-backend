@@ -2,6 +2,7 @@ package com.barbearia.ph.model;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -14,6 +15,8 @@ import java.util.List;
 @NoArgsConstructor
 @Data
 @Entity
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ServicoEntity {
 
     @Id
@@ -29,4 +32,9 @@ public class ServicoEntity {
     @OneToMany(mappedBy = "servicoEntity", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<ProfissionalServicoEntity> profissionalServicoEntity;
+
+
+    @ManyToMany(mappedBy = "servicos")
+    @JsonIgnore
+    private List<ProfissionalEntity> profissionais;
 }

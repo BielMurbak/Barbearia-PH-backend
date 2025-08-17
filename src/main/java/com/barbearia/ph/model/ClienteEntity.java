@@ -2,6 +2,7 @@ package com.barbearia.ph.model;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,6 +14,7 @@ import java.util.List;
 @Data
 @Entity
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ClienteEntity extends PessoaAbstract {
 
     @Id

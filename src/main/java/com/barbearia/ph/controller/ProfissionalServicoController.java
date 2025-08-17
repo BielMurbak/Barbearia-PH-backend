@@ -1,7 +1,6 @@
 package com.barbearia.ph.controller;
 
 
-import com.barbearia.ph.model.ClienteEntity;
 import com.barbearia.ph.model.ProfissionalServicoEntity;
 import com.barbearia.ph.service.ProfissionalServicoService;
 import lombok.RequiredArgsConstructor;
@@ -13,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/profissionalServicoService")
+@RequestMapping("/api/profissionais/servicos")
 @RequiredArgsConstructor
-public class ProfissionalServicoServiceController {
+public class ProfissionalServicoController {
 
     private final ProfissionalServicoService profissionalServicoService;
 

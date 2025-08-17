@@ -1,5 +1,6 @@
 package com.barbearia.ph.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -13,6 +14,7 @@ import java.util.List;
 @Data
 @Entity
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProfissionalServicoEntity {
 
     @Id
