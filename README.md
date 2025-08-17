@@ -119,32 +119,71 @@ Rode o projeto pela classe BarbeariaApplication.java
 
 Use o Postman para fazer requisições nos endpoints:
 
-**Clientes:**
-- POST /api/clientes - Criar cliente
-- GET /api/clientes - Listar todos
-- GET /api/clientes/{id} - Buscar por ID
-- PUT /api/clientes/{id} - Atualizar
-- DELETE /api/clientes/{id} - Deletar
+.
 
-**Profissionais:**
-- POST /api/profissionais - Criar profissional
-- GET /api/profissionais - Listar todos
-- GET /api/profissionais/{id} - Buscar por ID
-- PUT /api/profissionais/{id} - Atualizar
-- DELETE /api/profissionais/{id} - Deletar
+Clientes
 
-**Serviços:**
-- POST /api/servicos - Criar serviço
-- GET /api/servicos - Listar todos
-- GET /api/servicos/{id} - Buscar por ID
-- PUT /api/servicos/{id} - Atualizar
-- DELETE /api/servicos/{id} - Deletar
+| Método   | Endpoint                                                        | Descrição                |
+| -------- | --------------------------------------------------------------- | ------------------------ |
+| `POST`   | `/api/clientes/save`                                            | Criar um novo cliente    |
+| `GET`    | `/api/clientes/listar`                                          | Listar todos os clientes |
+| `GET`    | `/api/clientes/{id}`                                            | Buscar cliente por ID    |
+| `PUT`    | `/api/clientes/{id}`                                            | Atualizar cliente por ID |
+| `DELETE` | `/api/clientes/{id}`                                            | Deletar cliente por ID   |
+| `GET`    | `/api/clientes/buscar/nome?nome=João`                           | Buscar por nome          |
+| `GET`    | `/api/clientes/buscar/celular?celular=999999999`                | Buscar por celular       |
+| `GET`    | `/api/clientes/buscar/nome-completo?nomeCompleto=João da Silva` | Buscar por nome completo |
 
-**Agendamentos:**
-- POST /api/agendamentos - Criar agendamento
-- GET /api/agendamentos - Listar todos
-- GET /api/agendamentos/{id} - Buscar por ID
-- DELETE /api/agendamentos/{id} - Deletar
+.
+
+Profissionais
+
+| Método   | Endpoint                                                           | Descrição                                                               |
+| -------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| `POST`   | `/api/profissionais/save`                                          | Criar um novo profissional                                              |
+| `GET`    | `/api/profissionais/listar`                                        | Listar todos os profissionais                                           |
+| `GET`    | `/api/profissionais/{id}`                                          | Buscar profissional por ID                                              |
+| `PUT`    | `/api/profissionais/{id}`                                          | Atualizar profissional por ID                                           |
+| `DELETE` | `/api/profissionais/{id}`                                          | Deletar profissional por ID                                             |
+| `GET`    | `/api/profissionais/buscar/nome?nome=Lucas`                        | Buscar por nome                                                         |
+| `GET`    | `/api/profissionais/buscar/especializacao?especializacao=BARBEIRO` | Buscar por especialização (ex: BARBEIRO, CABELEIREIRO, COLORISTA, etc.) |
+
+.
+
+Serviços
+
+| Método   | Endpoint                                                         | Descrição                   |
+| -------- | ---------------------------------------------------------------- | --------------------------- |
+| `POST`   | `/api/servicos/save`                                             | Criar um novo serviço       |
+| `GET`    | `/api/servicos/listar`                                           | Listar todos os serviços    |
+| `GET`    | `/api/servicos/{id}`                                             | Buscar serviço por ID       |
+| `PUT`    | `/api/servicos/{id}`                                             | Atualizar serviço por ID    |
+| `DELETE` | `/api/servicos/{id}`                                             | Deletar serviço por ID      |
+| `GET`    | `/api/servicos/buscar/descricao?descricao=Corte`                 | Buscar por descrição        |
+| `GET`    | `/api/servicos/buscar/duracao-maxima?duracao=30`                 | Buscar por duração máxima   |
+| `GET`    | `/api/servicos/buscar/duracao-range?duracaoMin=15&duracaoMax=45` | Buscar por faixa de duração |
+
+.
+
+Profissional e Serviço
+
+| Método | Endpoint                           | Descrição                                    |
+| ------ | ---------------------------------- | -------------------------------------------- |
+| `POST` | `/api/profissionais/servicos/save` | Associar profissional a um serviço com preço |
+
+.
+
+Agendamentos
+
+| Método   | Endpoint                                                                    | Descrição                       |
+| -------- | --------------------------------------------------------------------------- | ------------------------------- |
+| `POST`   | `/api/agendamentos/save`                                                    | Criar um novo agendamento       |
+| `GET`    | `/api/agendamentos/listar`                                                  | Listar todos os agendamentos    |
+| `GET`    | `/api/agendamentos/{id}`                                                    | Buscar agendamento por ID       |
+| `DELETE` | `/api/agendamentos/{id}`                                                    | Deletar agendamento por ID      |
+| `GET`    | `/api/agendamentos/buscar/data?data=2025-08-20`                             | Buscar agendamentos por data    |
+| `GET`    | `/api/agendamentos/buscar/cliente/{clienteId}`                              | Buscar agendamentos por cliente |
+| `GET`    | `/api/agendamentos/buscar/periodo?dataInicio=2025-08-01&dataFim=2025-08-31` | Buscar agendamentos por período |
 
 .
 
@@ -191,4 +230,5 @@ Testes de API: Postman
 Gerenciador de build: Maven
 
 .
+
 
