@@ -73,4 +73,37 @@ public class ClienteController {
                     .body("Erro ao deletar cliente com ID " + id + ": " + ex.getMessage());
         }
     }
+    
+    @GetMapping("/buscar/nome")
+    public ResponseEntity<?> findByNome(@RequestParam String nome) {
+        try {
+            List<ClienteEntity> clientes = clienteService.findByNome(nome);
+            return ResponseEntity.ok(clientes);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao buscar clientes por nome: " + ex.getMessage());
+        }
+    }
+    
+    @GetMapping("/buscar/celular")
+    public ResponseEntity<?> findByCelular(@RequestParam String celular) {
+        try {
+            List<ClienteEntity> clientes = clienteService.findByCelular(celular);
+            return ResponseEntity.ok(clientes);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao buscar clientes por celular: " + ex.getMessage());
+        }
+    }
+    
+    @GetMapping("/buscar/nome-completo")
+    public ResponseEntity<?> findByNomeCompleto(@RequestParam String nomeCompleto) {
+        try {
+            List<ClienteEntity> clientes = clienteService.findByNomeCompleto(nomeCompleto);
+            return ResponseEntity.ok(clientes);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao buscar clientes por nome completo: " + ex.getMessage());
+        }
+    }
 }

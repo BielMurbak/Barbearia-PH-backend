@@ -36,4 +36,16 @@ public class ServicoService {
         findById(id);
         servicoRepository.deleteById(id);
     }
+    
+    public List<ServicoEntity> findByDescricao(String descricao){
+        return servicoRepository.findByDescricaoIgnoreCaseContaining(descricao);
+    }
+    
+    public List<ServicoEntity> findByDuracaoMaxima(int duracao){
+        return servicoRepository.findByMinDeDuracaoLessThanEqual(duracao);
+    }
+    
+    public List<ServicoEntity> findByDuracaoRange(int duracaoMin, int duracaoMax){
+        return servicoRepository.findByDuracaoRange(duracaoMin, duracaoMax);
+    }
 }

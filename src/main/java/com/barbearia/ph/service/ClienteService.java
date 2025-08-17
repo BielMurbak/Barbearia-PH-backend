@@ -38,4 +38,16 @@ public class ClienteService {
         findById(id);
         clienteRepository.deleteById(id);
     }
+    
+    public List<ClienteEntity> findByNome(String nome){
+        return clienteRepository.findByNomeIgnoreCaseContaining(nome);
+    }
+    
+    public List<ClienteEntity> findByCelular(String celular){
+        return clienteRepository.findByCelularContaining(celular);
+    }
+    
+    public List<ClienteEntity> findByNomeCompleto(String nomeCompleto){
+        return clienteRepository.findByNomeCompletoContaining(nomeCompleto);
+    }
 }

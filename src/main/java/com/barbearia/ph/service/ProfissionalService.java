@@ -39,4 +39,16 @@ public class ProfissionalService {
         findById(id);
         profissionalRepository.deleteById(id);
     }
+    
+    public List<ProfissionalEntity> findByNome(String nome){
+        return profissionalRepository.findByNomeIgnoreCaseContaining(nome);
+    }
+    
+    public List<ProfissionalEntity> findByEspecializacao(com.barbearia.ph.model.Especializacao especializacao){
+        return profissionalRepository.findByEspecializacao(especializacao);
+    }
+    
+    public List<ProfissionalEntity> findByEspecializacaoAndNome(com.barbearia.ph.model.Especializacao especializacao, String nome){
+        return profissionalRepository.findByEspecializacaoAndNomeContaining(especializacao, nome);
+    }
 }

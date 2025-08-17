@@ -44,4 +44,18 @@ public class AgendamentoService {
         findById(id);
         agendamentoRepository.deleteById(id);
     }
+    
+    public List<AgendamentoEntity> findByData(java.time.LocalDate data){
+        return agendamentoRepository.findByData(data);
+    }
+    
+    public List<AgendamentoEntity> findByCliente(Long clienteId){
+        ClienteEntity cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
+        return agendamentoRepository.findByClienteEntity(cliente);
+    }
+    
+    public List<AgendamentoEntity> findByPeriodo(java.time.LocalDate dataInicio, java.time.LocalDate dataFim){
+        return agendamentoRepository.findAgendamentosPorPeriodo(dataInicio, dataFim);
+    }
 }

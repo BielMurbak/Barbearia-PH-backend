@@ -88,4 +88,37 @@ public class ServicoController {
                     .body("Erro ao remover serviço: " + ex.getMessage());
         }
     }
+    
+    @GetMapping("/buscar/descricao")
+    public ResponseEntity<?> findByDescricao(@RequestParam String descricao) {
+        try {
+            List<ServicoEntity> servicos = servicoService.findByDescricao(descricao);
+            return ResponseEntity.ok(servicos);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao buscar serviços por descrição: " + ex.getMessage());
+        }
+    }
+    
+    @GetMapping("/buscar/duracao-maxima")
+    public ResponseEntity<?> findByDuracaoMaxima(@RequestParam int duracao) {
+        try {
+            List<ServicoEntity> servicos = servicoService.findByDuracaoMaxima(duracao);
+            return ResponseEntity.ok(servicos);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao buscar serviços por duração máxima: " + ex.getMessage());
+        }
+    }
+    
+    @GetMapping("/buscar/duracao-range")
+    public ResponseEntity<?> findByDuracaoRange(@RequestParam int duracaoMin, @RequestParam int duracaoMax) {
+        try {
+            List<ServicoEntity> servicos = servicoService.findByDuracaoRange(duracaoMin, duracaoMax);
+            return ResponseEntity.ok(servicos);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao buscar serviços por faixa de duração: " + ex.getMessage());
+        }
+    }
 }

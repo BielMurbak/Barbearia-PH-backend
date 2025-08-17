@@ -71,4 +71,27 @@ public class ProfissionalController {
                     .body("Erro ao deletar profissional com ID " + id + ": " + ex.getMessage());
         }
     }
+    
+    @GetMapping("/buscar/nome")
+    public ResponseEntity<?> findByNome(@RequestParam String nome) {
+        try {
+            List<ProfissionalEntity> profissionais = profissionalService.findByNome(nome);
+            return ResponseEntity.ok(profissionais);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao buscar profissionais por nome: " + ex.getMessage());
+        }
+    }
+    
+    @GetMapping("/buscar/especializacao")
+    public ResponseEntity<?> findByEspecializacao(@RequestParam String especializacao) {
+        try {
+            com.barbearia.ph.model.Especializacao esp = com.barbearia.ph.model.Especializacao.valueOf(especializacao.toUpperCase());
+            List<ProfissionalEntity> profissionais = profissionalService.findByEspecializacao(esp);
+            return ResponseEntity.ok(profissionais);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao buscar profissionais por especialização: " + ex.getMessage());
+        }
+    }
 }

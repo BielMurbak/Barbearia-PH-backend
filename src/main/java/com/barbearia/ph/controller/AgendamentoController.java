@@ -67,4 +67,40 @@ public class AgendamentoController {
                     .body("Erro ao deletar agendamento com ID " + id + ": " + ex.getMessage());
         }
     }
+    
+    @GetMapping("/buscar/data")
+    public ResponseEntity<?> findByData(@RequestParam String data) {
+        try {
+            java.time.LocalDate localDate = java.time.LocalDate.parse(data);
+            List<AgendamentoEntity> agendamentos = agendamentoService.findByData(localDate);
+            return ResponseEntity.ok(agendamentos);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao buscar agendamentos por data: " + ex.getMessage());
+        }
+    }
+    
+    @GetMapping("/buscar/cliente/{clienteId}")
+    public ResponseEntity<?> findByCliente(@PathVariable Long clienteId) {
+        try {
+            List<AgendamentoEntity> agendamentos = agendamentoService.findByCliente(clienteId);
+            return ResponseEntity.ok(agendamentos);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao buscar agendamentos por cliente: " + ex.getMessage());
+        }
+    }
+    
+    @GetMapping("/buscar/periodo")
+    public ResponseEntity<?> findByPeriodo(@RequestParam String dataInicio, @RequestParam String dataFim) {
+        try {
+            java.time.LocalDate inicio = java.time.LocalDate.parse(dataInicio);
+            java.time.LocalDate fim = java.time.LocalDate.parse(dataFim);
+            List<AgendamentoEntity> agendamentos = agendamentoService.findByPeriodo(inicio, fim);
+            return ResponseEntity.ok(agendamentos);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao buscar agendamentos por período: " + ex.getMessage());
+        }
+    }
 }
