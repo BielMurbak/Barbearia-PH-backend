@@ -32,11 +32,17 @@ Este projeto consiste em um sistema completo de agendamento para barbearias, des
 
 ⚙️ Tecnologias
 
-Spring Boot: Backend estruturado com API RESTful
+Spring Boot 3.4.1: Backend estruturado com API RESTful
 
 Java 17: Programação orientada a objetos
 
+Spring Data JPA: Persistência e relacionamentos
+
+Bean Validation: Validações de entrada
+
 MySQL: Banco de dados relacional
+
+Lombok: Redução de código boilerplate
 
 Postman: Testes de requisições HTTP
 
@@ -48,17 +54,21 @@ Maven: Gerenciamento de dependências e build
 
 🛠 Requisitos Funcionais
 
-API com endpoints CRUD (Create, Read, Update, Delete)
+✅ API com endpoints CRUD (Create, Read, Update, Delete)
 
-Associação entre entidades via relacionamento JPA
+✅ Associação entre entidades via relacionamento JPA
 
-Requisições testadas e documentadas via Postman
+✅ Requisições testadas e documentadas via Postman
 
-Persistência de dados no MySQL
+✅ Persistência de dados no MySQL
 
-Validações básicas e tratamento de erros
+✅ Validações com Bean Validation (@NotBlank, @NotNull)
 
-Uso de anotações Spring (como @RestController, @Entity, @Repository, @Service)
+✅ Uso de anotações Spring (@RestController, @Entity, @Repository, @Service)
+
+✅ Tratamento de exceções personalizadas
+
+✅ Relacionamentos 1-N mapeados corretamente
 
 .
 
@@ -107,17 +117,34 @@ Configure o MySQL no application.properties
 
 Rode o projeto pela classe BarbeariaApplication.java
 
-Use o Postman para fazer requisições nos endpoints, como:
+Use o Postman para fazer requisições nos endpoints:
 
-POST /api/clientes
+**Clientes:**
+- POST /api/clientes - Criar cliente
+- GET /api/clientes - Listar todos
+- GET /api/clientes/{id} - Buscar por ID
+- PUT /api/clientes/{id} - Atualizar
+- DELETE /api/clientes/{id} - Deletar
 
-POST /api/profissionais
+**Profissionais:**
+- POST /api/profissionais - Criar profissional
+- GET /api/profissionais - Listar todos
+- GET /api/profissionais/{id} - Buscar por ID
+- PUT /api/profissionais/{id} - Atualizar
+- DELETE /api/profissionais/{id} - Deletar
 
-POST /api/servicos
+**Serviços:**
+- POST /api/servicos - Criar serviço
+- GET /api/servicos - Listar todos
+- GET /api/servicos/{id} - Buscar por ID
+- PUT /api/servicos/{id} - Atualizar
+- DELETE /api/servicos/{id} - Deletar
 
-POST /api/agendamentos
-
-GET /api/agendamentos
+**Agendamentos:**
+- POST /api/agendamentos - Criar agendamento
+- GET /api/agendamentos - Listar todos
+- GET /api/agendamentos/{id} - Buscar por ID
+- DELETE /api/agendamentos/{id} - Deletar
 
 .
 
@@ -140,6 +167,10 @@ https://lucid.app/lucidchart/421d03fd-b098-464b-a9c6-e7eaaf58106f/edit?viewport_
 Rafael Carlos Scarabelot 
 
 Gabriel Murbak Scarabelot
+
+Adryan de Souza Furchi
+
+Gabriel de Campos Wegher
 
 .
 

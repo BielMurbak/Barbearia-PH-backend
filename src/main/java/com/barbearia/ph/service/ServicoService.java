@@ -1,12 +1,12 @@
 package com.barbearia.ph.service;
 
 
-import com.barbearia.ph.model.ProfissionalServicoEntity;
 import com.barbearia.ph.model.ServicoEntity;
-import com.barbearia.ph.repository.ProfissionalServicoRepository;
 import com.barbearia.ph.repository.ServicoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -17,4 +17,23 @@ public class ServicoService {
         return servicoRepository.save(servicoEntity);
     }
 
+    public List<ServicoEntity> findAll(){
+        return servicoRepository.findAll();
+    }
+
+    public ServicoEntity findById(Long id){
+        return servicoRepository.findById(id).orElseThrow(() -> new RuntimeException("Serviço não encontrado"));
+    }
+
+    public ServicoEntity update(Long id, ServicoEntity servicoEntity){
+        ServicoEntity servico = findById(id);
+        servico.setDescricao(servicoEntity.getDescricao());
+        servico.setMinDeDuracao(servicoEntity.getMinDeDuracao());
+        return servicoRepository.save(servico);
+    }
+
+    public void delete(Long id){
+        findById(id);
+        servicoRepository.deleteById(id);
+    }
 }
