@@ -25,23 +25,46 @@ public class AgendamentoController {
     private final AgendamentoService agendamentoService;
 
     @PostMapping("/save")
-    public ResponseEntity<AgendamentoEntity> save(@Valid @RequestBody AgendamentoEntity agendamento) {
-        return ResponseEntity.ok(agendamentoService.save(agendamento));
+    public ResponseEntity<?> save(@Valid @RequestBody AgendamentoEntity agendamento) {
+        try {
+            AgendamentoEntity salvo = agendamentoService.save(agendamento);
+            return ResponseEntity.ok(salvo);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao salvar agendamento: " + ex.getMessage());
+        }
     }
 
     @GetMapping("/listar")
-    public ResponseEntity<List<AgendamentoEntity>> findAll() {
-        return ResponseEntity.ok(agendamentoService.findAll());
+    public ResponseEntity<?> findAll() {
+        try {
+            List<AgendamentoEntity> agendamentos = agendamentoService.findAll();
+            return ResponseEntity.ok(agendamentos);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao listar agendamentos: " + ex.getMessage());
+        }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AgendamentoEntity> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(agendamentoService.findById(id));
+    public ResponseEntity<?> findById(@PathVariable Long id) {
+        try {
+            AgendamentoEntity agendamento = agendamentoService.findById(id);
+            return ResponseEntity.ok(agendamento);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao buscar agendamento com ID " + id + ": " + ex.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        agendamentoService.delete(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        try {
+            agendamentoService.delete(id);
+            return ResponseEntity.ok("Agendamento com ID " + id + " removido com sucesso.");
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao deletar agendamento com ID " + id + ": " + ex.getMessage());
+        }
     }
 }

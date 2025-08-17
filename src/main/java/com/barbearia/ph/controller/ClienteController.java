@@ -20,28 +20,57 @@ public class ClienteController {
     private final ClienteService clienteService;
 
     @PostMapping("/save")
-    public ResponseEntity<ClienteEntity> save(@Valid @RequestBody ClienteEntity clienteEntity) {
-        return ResponseEntity.ok(clienteService.save(clienteEntity));
+    public ResponseEntity<?> save(@Valid @RequestBody ClienteEntity clienteEntity) {
+        try {
+            ClienteEntity salvo = clienteService.save(clienteEntity);
+            return ResponseEntity.ok(salvo);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao salvar cliente: " + ex.getMessage());
+        }
     }
 
     @GetMapping("/listar")
-    public ResponseEntity<List<ClienteEntity>> findAll() {
-        return ResponseEntity.ok(clienteService.findAll());
+    public ResponseEntity<?> findAll() {
+        try {
+            List<ClienteEntity> clientes = clienteService.findAll();
+            return ResponseEntity.ok(clientes);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao listar clientes: " + ex.getMessage());
+        }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ClienteEntity> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(clienteService.findById(id));
+    public ResponseEntity<?> findById(@PathVariable Long id) {
+        try {
+            ClienteEntity cliente = clienteService.findById(id);
+            return ResponseEntity.ok(cliente);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao buscar cliente com ID " + id + ": " + ex.getMessage());
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ClienteEntity> update(@PathVariable Long id, @Valid @RequestBody ClienteEntity clienteEntity) {
-        return ResponseEntity.ok(clienteService.update(id, clienteEntity));
+    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody ClienteEntity clienteEntity) {
+        try {
+            ClienteEntity atualizado = clienteService.update(id, clienteEntity);
+            return ResponseEntity.ok(atualizado);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao atualizar cliente com ID " + id + ": " + ex.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        clienteService.delete(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        try {
+            clienteService.delete(id);
+            return ResponseEntity.ok("Cliente com ID " + id + " removido com sucesso.");
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao deletar cliente com ID " + id + ": " + ex.getMessage());
+        }
     }
 }

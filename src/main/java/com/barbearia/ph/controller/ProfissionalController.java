@@ -4,6 +4,7 @@ import com.barbearia.ph.model.ProfissionalEntity;
 import com.barbearia.ph.service.ProfissionalService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,28 +18,57 @@ public class ProfissionalController {
     private final ProfissionalService profissionalService;
 
     @PostMapping("/save")
-    public ResponseEntity<ProfissionalEntity> save(@Valid @RequestBody ProfissionalEntity profissionalEntity) {
-        return ResponseEntity.ok(profissionalService.save(profissionalEntity));
+    public ResponseEntity<?> save(@Valid @RequestBody ProfissionalEntity profissionalEntity) {
+        try {
+            ProfissionalEntity salvo = profissionalService.save(profissionalEntity);
+            return ResponseEntity.ok(salvo);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao salvar profissional: " + ex.getMessage());
+        }
     }
 
     @GetMapping("/listar")
-    public ResponseEntity<List<ProfissionalEntity>> findAll() {
-        return ResponseEntity.ok(profissionalService.findAll());
+    public ResponseEntity<?> findAll() {
+        try {
+            List<ProfissionalEntity> profissionais = profissionalService.findAll();
+            return ResponseEntity.ok(profissionais);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao listar profissionais: " + ex.getMessage());
+        }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProfissionalEntity> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(profissionalService.findById(id));
+    public ResponseEntity<?> findById(@PathVariable Long id) {
+        try {
+            ProfissionalEntity profissional = profissionalService.findById(id);
+            return ResponseEntity.ok(profissional);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao buscar profissional com ID " + id + ": " + ex.getMessage());
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProfissionalEntity> update(@PathVariable Long id, @Valid @RequestBody ProfissionalEntity profissionalEntity) {
-        return ResponseEntity.ok(profissionalService.update(id, profissionalEntity));
+    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody ProfissionalEntity profissionalEntity) {
+        try {
+            ProfissionalEntity atualizado = profissionalService.update(id, profissionalEntity);
+            return ResponseEntity.ok(atualizado);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao atualizar profissional com ID " + id + ": " + ex.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        profissionalService.delete(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        try {
+            profissionalService.delete(id);
+            return ResponseEntity.ok("Profissional com ID " + id + " removido com sucesso.");
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao deletar profissional com ID " + id + ": " + ex.getMessage());
+        }
     }
 }
