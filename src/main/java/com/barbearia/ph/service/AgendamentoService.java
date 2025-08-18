@@ -9,7 +9,10 @@ import com.barbearia.ph.repository.ProfissionalServicoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,15 +25,39 @@ public class AgendamentoService {
     public AgendamentoEntity save(AgendamentoEntity agendamento) {
         ClienteEntity cliente = clienteRepository.findById(agendamento.getClienteEntity().getId())
                 .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
-        
+
         ProfissionalServicoEntity profServ = profissionalServicoRepository.findById(agendamento.getProfissionalServicoEntity().getId())
                 .orElseThrow(() -> new RuntimeException("ProfissionalServico não encontrado"));
-        
+
         agendamento.setClienteEntity(cliente);
         agendamento.setProfissionalServicoEntity(profServ);
-        
+
+        int duracaoMinutos = profServ.getServicoEntity().getMinDeDuracao();
+
+        LocalDateTime inicioNovo = LocalDateTime.of(agendamento.getData(), LocalTime.parse(agendamento.getHorario()));
+        LocalDateTime fimNovo = inicioNovo.plusMinutes(duracaoMinutos);
+
+        List<AgendamentoEntity> agendamentosDia = agendamentoRepository
+                .findByDataAndProfissionalServicoEntity_ProfissionalEntity_Id(agendamento.getData(),
+                        profServ.getProfissionalEntity().getId());
+
+        for (AgendamentoEntity ag : agendamentosDia) {
+            LocalDateTime inicioExistente = LocalDateTime.of(ag.getData(), LocalTime.parse(ag.getHorario()));
+            int duracaoExistente = ag.getProfissionalServicoEntity().getServicoEntity().getMinDeDuracao();
+            LocalDateTime fimExistente = inicioExistente.plusMinutes(duracaoExistente);
+
+            boolean conflita = inicioNovo.isBefore(fimExistente) && fimNovo.isAfter(inicioExistente);
+            if (conflita) {
+                throw new RuntimeException("Horário indisponível: conflito com outro agendamento.");
+            }
+        }
+
         return agendamentoRepository.save(agendamento);
     }
+
+
+
+
 
     public List<AgendamentoEntity> findAll() {
         return agendamentoRepository.findAll();

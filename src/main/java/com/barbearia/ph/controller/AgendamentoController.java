@@ -29,9 +29,12 @@ public class AgendamentoController {
         try {
             AgendamentoEntity salvo = agendamentoService.save(agendamento);
             return ResponseEntity.ok(salvo);
-        } catch (Exception ex) {
+        } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao salvar agendamento: " + ex.getMessage());
+                    .body("Erro de negócio: " + ex.getMessage());
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro interno do servidor, tente novamente mais tarde.");
         }
     }
 
