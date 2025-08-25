@@ -55,6 +55,7 @@ public class AgendamentoService {
             }
         }
 
+        atualizarStatus(agendamento); // <-- Aqui atualiza o status automaticamente
         return agendamentoRepository.save(agendamento);
     }
 
@@ -94,6 +95,8 @@ public class AgendamentoService {
         agendamento.setLocal(agendamentoEntity.getLocal());
         agendamento.setClienteEntity(agendamentoEntity.getClienteEntity());
         agendamento.setProfissionalServicoEntity(agendamentoEntity.getProfissionalServicoEntity());
+
+        atualizarStatus(agendamento); // <-- Atualiza status ao modificar
         return agendamentoRepository.save(agendamento);
     }
 
@@ -121,7 +124,31 @@ public class AgendamentoService {
                         .orElseThrow(() -> new RuntimeException("ProfissionalServiço não encontrado"));
                 agendamento.setProfissionalServicoEntity(ps);
             }
+
+            // Permitir CANCELADO manualmente
+            if (updates.containsKey("status")) {
+                String statusStr = updates.get("status").toString();
+                if ("CANCELADO".equalsIgnoreCase(statusStr)) {
+                    agendamento.setStatus(AgendamentoEntity.StatusAgendamento.CANCELADO);
+                }
+            }
+
+            atualizarStatus(agendamento); // Atualiza automaticamente PENDENTE/CONCLUIDO se não estiver CANCELADO
             return agendamentoRepository.save(agendamento);
         });
+    }
+
+    private void atualizarStatus(AgendamentoEntity agendamento) {
+        // Converte a data e hora do agendamento para LocalDateTime
+        LocalDateTime inicio = LocalDateTime.of(agendamento.getData(), LocalTime.parse(agendamento.getHorario()));
+
+        // Se já passou, concluiu, senão pendente
+        if (agendamento.getStatus() != AgendamentoEntity.StatusAgendamento.CANCELADO) {
+            if (inicio.isBefore(LocalDateTime.now())) {
+                agendamento.setStatus(AgendamentoEntity.StatusAgendamento.CONCLUIDO);
+            } else {
+                agendamento.setStatus(AgendamentoEntity.StatusAgendamento.PENDENTE);
+            }
+        }
     }
 }

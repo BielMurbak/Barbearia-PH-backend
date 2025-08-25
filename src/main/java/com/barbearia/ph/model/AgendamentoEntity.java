@@ -33,6 +33,15 @@ public class AgendamentoEntity {
     @NotBlank(message = "O campo horário é obrigatório")
     private String horario;
 
+    @Enumerated(EnumType.STRING)
+    private StatusAgendamento status;
+
+    public enum StatusAgendamento {
+        PENDENTE,
+        CONCLUIDO,
+        CANCELADO
+    }
+
     @ManyToOne
     @JoinColumn(name = "cliente_id", nullable = false)
     @NotNull(message = "O cliente é obrigatório")
