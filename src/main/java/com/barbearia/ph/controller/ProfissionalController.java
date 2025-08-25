@@ -17,7 +17,7 @@ public class ProfissionalController {
 
     private final ProfissionalService profissionalService;
 
-    @PostMapping("/save")
+    @PostMapping
     public ResponseEntity<?> save(@Valid @RequestBody ProfissionalEntity profissionalEntity) {
         try {
             ProfissionalEntity salvo = profissionalService.save(profissionalEntity);
@@ -28,7 +28,7 @@ public class ProfissionalController {
         }
     }
 
-    @GetMapping("/listar")
+    @GetMapping
     public ResponseEntity<?> findAll() {
         try {
             List<ProfissionalEntity> profissionais = profissionalService.findAll();
@@ -72,7 +72,7 @@ public class ProfissionalController {
         }
     }
     
-    @GetMapping("/buscar/nome")
+    @GetMapping("/nome")
     public ResponseEntity<?> findByNome(@RequestParam String nome) {
         try {
             List<ProfissionalEntity> profissionais = profissionalService.findByNome(nome);
@@ -83,7 +83,7 @@ public class ProfissionalController {
         }
     }
     
-    @GetMapping("/buscar/especializacao")
+    @GetMapping("/especializacao")
     public ResponseEntity<?> findByEspecializacao(@RequestParam String especializacao) {
         try {
             com.barbearia.ph.model.Especializacao esp = com.barbearia.ph.model.Especializacao.valueOf(especializacao.toUpperCase());

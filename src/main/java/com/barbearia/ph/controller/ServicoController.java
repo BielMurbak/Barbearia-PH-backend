@@ -19,7 +19,7 @@ public class ServicoController {
 
     private final ServicoService servicoService;
 
-    @PostMapping("/save")
+    @PostMapping
     public ResponseEntity<?> save(@Valid @RequestBody ServicoEntity servicoEntity) {
         try {
             ServicoEntity salvo = servicoService.save(servicoEntity);
@@ -31,7 +31,7 @@ public class ServicoController {
         }
     }
 
-    @GetMapping("/listar")
+    @GetMapping
     public ResponseEntity<?> findAll() {
         try {
             List<ServicoEntity> servicos = servicoService.findAll();
@@ -89,7 +89,7 @@ public class ServicoController {
         }
     }
     
-    @GetMapping("/buscar/descricao")
+    @GetMapping("/descricao")
     public ResponseEntity<?> findByDescricao(@RequestParam String descricao) {
         try {
             List<ServicoEntity> servicos = servicoService.findByDescricao(descricao);
@@ -100,7 +100,7 @@ public class ServicoController {
         }
     }
     
-    @GetMapping("/buscar/duracao-maxima")
+    @GetMapping("/duracao-maxima")
     public ResponseEntity<?> findByDuracaoMaxima(@RequestParam int duracao) {
         try {
             List<ServicoEntity> servicos = servicoService.findByDuracaoMaxima(duracao);
@@ -111,7 +111,7 @@ public class ServicoController {
         }
     }
     
-    @GetMapping("/buscar/duracao-range")
+    @GetMapping("/duracao-range")
     public ResponseEntity<?> findByDuracaoRange(@RequestParam int duracaoMin, @RequestParam int duracaoMax) {
         try {
             List<ServicoEntity> servicos = servicoService.findByDuracaoRange(duracaoMin, duracaoMax);

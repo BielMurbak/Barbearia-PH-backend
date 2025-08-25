@@ -19,7 +19,7 @@ public class ClienteController {
 
     private final ClienteService clienteService;
 
-    @PostMapping("/save")
+    @PostMapping
     public ResponseEntity<?> save(@Valid @RequestBody ClienteEntity clienteEntity) {
         try {
             ClienteEntity salvo = clienteService.save(clienteEntity);
@@ -30,7 +30,7 @@ public class ClienteController {
         }
     }
 
-    @GetMapping("/listar")
+    @GetMapping
     public ResponseEntity<?> findAll() {
         try {
             List<ClienteEntity> clientes = clienteService.findAll();
@@ -74,7 +74,7 @@ public class ClienteController {
         }
     }
     
-    @GetMapping("/buscar/nome")
+    @GetMapping("/nome")
     public ResponseEntity<?> findByNome(@RequestParam String nome) {
         try {
             List<ClienteEntity> clientes = clienteService.findByNome(nome);
@@ -85,7 +85,7 @@ public class ClienteController {
         }
     }
     
-    @GetMapping("/buscar/celular")
+    @GetMapping("/celular")
     public ResponseEntity<?> findByCelular(@RequestParam String celular) {
         try {
             List<ClienteEntity> clientes = clienteService.findByCelular(celular);
@@ -96,7 +96,7 @@ public class ClienteController {
         }
     }
     
-    @GetMapping("/buscar/nome-completo")
+    @GetMapping("/nome-completo")
     public ResponseEntity<?> findByNomeCompleto(@RequestParam String nomeCompleto) {
         try {
             List<ClienteEntity> clientes = clienteService.findByNomeCompleto(nomeCompleto);
