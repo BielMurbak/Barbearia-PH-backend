@@ -138,6 +138,10 @@ public class AgendamentoService {
         });
     }
 
+    public List<AgendamentoEntity> findAllWithDetails() {
+        return agendamentoRepository.findAllWithDetails();
+    }
+
     private void atualizarStatus(AgendamentoEntity agendamento) {
         // Converte a data e hora do agendamento para LocalDateTime
         LocalDateTime inicio = LocalDateTime.of(agendamento.getData(), LocalTime.parse(agendamento.getHorario()));

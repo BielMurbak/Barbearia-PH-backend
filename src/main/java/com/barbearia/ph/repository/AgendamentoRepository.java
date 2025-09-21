@@ -22,4 +22,10 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
 
     List<AgendamentoEntity> findByDataAndProfissionalServicoEntity_ProfissionalEntity_Id(LocalDate data, Long profissionalId);
 
+    @Query("SELECT a FROM AgendamentoEntity a " +
+            "JOIN FETCH a.clienteEntity " +
+            "JOIN FETCH a.profissionalServicoEntity ps " +
+            "JOIN FETCH ps.servicoEntity " +
+            "JOIN FETCH ps.profissionalEntity")
+    List<AgendamentoEntity> findAllWithDetails();
 }

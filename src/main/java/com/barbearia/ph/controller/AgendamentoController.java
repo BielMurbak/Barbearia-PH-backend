@@ -69,7 +69,7 @@ public class AgendamentoController {
     @GetMapping
     public ResponseEntity<?> findAll() {
         try {
-            List<AgendamentoEntity> agendamentos = agendamentoService.findAll();
+            List<AgendamentoEntity> agendamentos = agendamentoService.findAllWithDetails();
             return ResponseEntity.ok(agendamentos);
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
