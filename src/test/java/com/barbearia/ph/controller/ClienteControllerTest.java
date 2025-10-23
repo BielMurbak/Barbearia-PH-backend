@@ -4,13 +4,14 @@ import com.barbearia.ph.model.ClienteEntity;
 import com.barbearia.ph.service.ClienteService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.ActiveProfiles;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,9 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 
-@AutoConfigureMockMvc
-@SpringBootTest
-@ActiveProfiles("test")
+
+@ExtendWith(MockitoExtension.class)
 class ClienteControllerTest {
 
     @Mock
