@@ -1,23 +1,15 @@
 package com.barbearia.ph.controller;
 
 import com.barbearia.ph.model.AgendamentoEntity;
-import com.barbearia.ph.model.ClienteEntity;
-import com.barbearia.ph.model.ProfissionalServicoEntity;
-import com.barbearia.ph.repository.AgendamentoRepository;
-import com.barbearia.ph.repository.ClienteRepository;
-import com.barbearia.ph.repository.ProfissionalRepository;
-import com.barbearia.ph.repository.ProfissionalServicoRepository;
 import com.barbearia.ph.service.AgendamentoService;
-import com.barbearia.ph.service.ProfissionalServicoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/agendamentos")
@@ -25,113 +17,54 @@ import java.util.Optional;
 @CrossOrigin(origins = "http://localhost:4200")
 public class AgendamentoController {
 
-
     private final AgendamentoService agendamentoService;
 
     @PostMapping
-    public ResponseEntity<?> save(@Valid @RequestBody AgendamentoEntity agendamento) {
-        try {
-            AgendamentoEntity salvo = agendamentoService.save(agendamento);
-            return ResponseEntity.ok(salvo);
-        } catch (RuntimeException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro de negócio: " + ex.getMessage());
-        }
+    public ResponseEntity<AgendamentoEntity> save(@Valid @RequestBody AgendamentoEntity agendamento) {
+        return ResponseEntity.ok(agendamentoService.save(agendamento));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody AgendamentoEntity agendamentoEntity) {
-        try {
-            AgendamentoEntity atualizado = agendamentoService.update(id, agendamentoEntity);
-            return ResponseEntity.ok(atualizado);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao atualizar agendamento com ID " + id + ": " + ex.getMessage());
-        }
+    public ResponseEntity<AgendamentoEntity> update(@PathVariable Long id, @Valid @RequestBody AgendamentoEntity agendamentoEntity) {
+        return ResponseEntity.ok(agendamentoService.update(id, agendamentoEntity));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<?> patchAgendamento(
-            @PathVariable Long id,
-            @RequestBody Map<String, Object> updates) {
-        try {
-            Optional<AgendamentoEntity> agendamentoAtualizado = agendamentoService.patch(id, updates);
-            return agendamentoAtualizado
-                    .<ResponseEntity<?>>map(ResponseEntity::ok)
-                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .body("Agendamento não encontrado"));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao atualizar agendamento: " + e.getMessage());
-        }
+    public ResponseEntity<AgendamentoEntity> patchAgendamento(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
+        return ResponseEntity.of(agendamentoService.patch(id, updates));
     }
 
     @GetMapping
-    public ResponseEntity<?> findAll() {
-        try {
-            List<AgendamentoEntity> agendamentos = agendamentoService.findAllWithDetails();
-            return ResponseEntity.ok(agendamentos);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao listar agendamentos: " + ex.getMessage());
-        }
+    public ResponseEntity<List<AgendamentoEntity>> findAll() {
+        return ResponseEntity.ok(agendamentoService.findAllWithDetails());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> findById(@PathVariable Long id) {
-        try {
-            AgendamentoEntity agendamento = agendamentoService.findById(id);
-            return ResponseEntity.ok(agendamento);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao buscar agendamento com ID " + id + ": " + ex.getMessage());
-        }
+    public ResponseEntity<AgendamentoEntity> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(agendamentoService.findById(id));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
-        try {
-            agendamentoService.delete(id);
-            return ResponseEntity.ok("Agendamento com ID " + id + " removido com sucesso.");
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao deletar agendamento com ID " + id + ": " + ex.getMessage());
-        }
+    public ResponseEntity<String> delete(@PathVariable Long id) {
+        agendamentoService.delete(id);
+        return ResponseEntity.ok("Agendamento com ID " + id + " removido com sucesso.");
     }
 
     @GetMapping("/data")
-    public ResponseEntity<?> findByData(@RequestParam String data) {
-        try {
-            java.time.LocalDate localDate = java.time.LocalDate.parse(data);
-            List<AgendamentoEntity> agendamentos = agendamentoService.findByData(localDate);
-            return ResponseEntity.ok(agendamentos);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao buscar agendamentos por data: " + ex.getMessage());
-        }
+    public ResponseEntity<List<AgendamentoEntity>> findByData(@RequestParam String data) {
+        LocalDate localDate = LocalDate.parse(data);
+        return ResponseEntity.ok(agendamentoService.findByData(localDate));
     }
 
     @GetMapping("/cliente/{clienteId}")
-    public ResponseEntity<?> findByCliente(@PathVariable Long clienteId) {
-        try {
-            List<AgendamentoEntity> agendamentos = agendamentoService.findByCliente(clienteId);
-            return ResponseEntity.ok(agendamentos);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao buscar agendamentos por cliente: " + ex.getMessage());
-        }
+    public ResponseEntity<List<AgendamentoEntity>> findByCliente(@PathVariable Long clienteId) {
+        return ResponseEntity.ok(agendamentoService.findByCliente(clienteId));
     }
 
     @GetMapping("/periodo")
-    public ResponseEntity<?> findByPeriodo(@RequestParam String dataInicio, @RequestParam String dataFim) {
-        try {
-            java.time.LocalDate inicio = java.time.LocalDate.parse(dataInicio);
-            java.time.LocalDate fim = java.time.LocalDate.parse(dataFim);
-            List<AgendamentoEntity> agendamentos = agendamentoService.findByPeriodo(inicio, fim);
-            return ResponseEntity.ok(agendamentos);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao buscar agendamentos por período: " + ex.getMessage());
-        }
+    public ResponseEntity<List<AgendamentoEntity>> findByPeriodo(@RequestParam String dataInicio, @RequestParam String dataFim) {
+        LocalDate inicio = LocalDate.parse(dataInicio);
+        LocalDate fim = LocalDate.parse(dataFim);
+        return ResponseEntity.ok(agendamentoService.findByPeriodo(inicio, fim));
     }
 }
