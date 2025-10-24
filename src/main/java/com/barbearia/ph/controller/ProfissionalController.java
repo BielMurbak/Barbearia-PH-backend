@@ -1,5 +1,6 @@
 package com.barbearia.ph.controller;
 
+import com.barbearia.ph.model.Especializacao;
 import com.barbearia.ph.model.ProfissionalEntity;
 import com.barbearia.ph.service.ProfissionalService;
 import jakarta.validation.Valid;
@@ -83,11 +84,11 @@ public class ProfissionalController {
                     .body("Erro ao buscar profissionais por nome: " + ex.getMessage());
         }
     }
-    
+
     @GetMapping("/especializacao")
     public ResponseEntity<?> findByEspecializacao(@RequestParam String especializacao) {
         try {
-            com.barbearia.ph.model.Especializacao esp = com.barbearia.ph.model.Especializacao.valueOf(especializacao.toUpperCase());
+            Especializacao esp = Especializacao.valueOf(especializacao);
             List<ProfissionalEntity> profissionais = profissionalService.findByEspecializacao(esp);
             return ResponseEntity.ok(profissionais);
         } catch (Exception ex) {
@@ -95,4 +96,5 @@ public class ProfissionalController {
                     .body("Erro ao buscar profissionais por especialização: " + ex.getMessage());
         }
     }
+
 }

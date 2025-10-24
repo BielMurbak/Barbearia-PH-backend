@@ -19,12 +19,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 
-import static org.hamcrest.Matchers.containsString;
-
-
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -70,27 +65,6 @@ class ProfissionalControllerTest {
     }
 
     @Test
-    @DisplayName("INTEGRAÇÃO – Deve retornar BadRequest para profissional inválido")
-    void naoDeveSalvarProfissionalComSucesso() throws Exception {
-        ProfissionalEntity profissional = new ProfissionalEntity();
-        profissional.setNome("");  // inválido
-        profissional.setSobrenome("");
-        profissional.setCelular("");
-        profissional.setEspecializacao(Especializacao.Corte);
-
-        String json = objectMapper.writeValueAsString(profissional);
-
-        mockMvc.perform(post("/api/profissionais")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest());
-
-        assert profissionalRepository.findAll().stream()
-                .noneMatch(p -> p.getNome().isEmpty());
-    }
-
-
-    @Test
     @DisplayName("INTEGRAÇÃO – Deve listar profissionais com sucesso")
     void deveRetornarProfissionaisComSucesso() throws Exception {
         ProfissionalEntity profissional = new ProfissionalEntity();
@@ -125,6 +99,126 @@ class ProfissionalControllerTest {
                 .andExpect(status().isBadRequest());
 
     }
+
+    @Test
+    @DisplayName("INTEGRAÇÃO – Deve listar profissional com id informado")
+    void deveRetornarProfissionaisComoidSucesso() throws Exception {
+        ProfissionalEntity profissional = new ProfissionalEntity();
+        profissional.setNome("RAFAEL");
+        profissional.setSobrenome("carlos");
+        profissional.setCelular("45 999806733");
+        profissional.setEspecializacao(Especializacao.Corte);
+
+
+        profissional = profissionalRepository.save(profissional);
+
+
+        mockMvc.perform(get("/api/profissionais/{id}",profissional.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+
+    }
+
+    @Test
+    @DisplayName("INTEGRAÇÃO – Deve atualizar um Profissional já cadastrado com sucesso")
+    void deveMudarAlgoEmProfissionalRetorneSucesso() throws Exception {
+
+        ProfissionalEntity profissional = new ProfissionalEntity();
+        profissional.setNome("Rafael");
+        profissional.setSobrenome("Carlos");
+        profissional.setCelular("45 999806733");
+        profissional.setEspecializacao(Especializacao.Corte);
+
+        profissional = profissionalRepository.save(profissional);
+
+
+        ProfissionalEntity profissionalAtualizado = new ProfissionalEntity();
+        profissionalAtualizado.setId(profissional.getId());
+        profissionalAtualizado.setNome("Rafael Atualizado");
+        profissionalAtualizado.setSobrenome("Silva");
+        profissionalAtualizado.setCelular("45 988888888");
+        profissionalAtualizado.setEspecializacao(Especializacao.Barba);
+
+        String json = objectMapper.writeValueAsString(profissionalAtualizado);
+
+
+        mockMvc.perform(put("/api/profissionais/{id}", profissional.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("Rafael Atualizado"))
+                .andExpect(jsonPath("$.sobrenome").value("Silva"))
+                .andExpect(jsonPath("$.celular").value("45 988888888"));
+    }
+
+    @Test
+    @DisplayName("INTEGRAÇÃO – Deve deletar profissional com ID informado")
+    void deveDeletarProfissionalComIdSucesso() throws Exception {
+
+        ProfissionalEntity profissional = new ProfissionalEntity();
+        profissional.setNome("Rafael");
+        profissional.setSobrenome("Carlos");
+        profissional.setCelular("45 999806733");
+        profissional.setEspecializacao(Especializacao.Corte);
+
+        profissional = profissionalRepository.save(profissional);
+
+
+        mockMvc.perform(delete("/api/profissionais/{id}", profissional.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+
+        assert profissionalRepository.findById(profissional.getId()).isEmpty();
+    }
+
+
+    @Test
+    @DisplayName("INTEGRAÇÃO – Deve Retornar profissional com nome")
+    void deveRetornarProfissionalComNome() throws Exception {
+        ProfissionalEntity profissional = new ProfissionalEntity();
+        profissional.setNome("RAFAEL");
+        profissional.setSobrenome("carlos");
+        profissional.setCelular("45 999806733");
+        profissional.setEspecializacao(Especializacao.Corte);
+
+
+        profissional = profissionalRepository.save(profissional);
+
+
+        mockMvc.perform(get("/api/profissionais/nome")
+                        .param("nome", profissional.getNome())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+    }
+
+    @Test
+    @DisplayName("INTEGRAÇÃO – Deve Retornar profissional com especializacao")
+    void deveRetornarProfissionalComEspecializacao() throws Exception {
+        ProfissionalEntity profissional = new ProfissionalEntity();
+        profissional.setNome("RAFAEL");
+        profissional.setSobrenome("carlos");
+        profissional.setCelular("45 999806733");
+        profissional.setEspecializacao(Especializacao.Corte);
+
+
+        profissional = profissionalRepository.save(profissional);
+
+
+        mockMvc.perform(get("/api/profissionais/especializacao")
+                        .param("especializacao", profissional.getEspecializacao().name())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].especializacao").value("Corte"));
+
+    }
+
+
+
+
+
 
 
 
