@@ -95,6 +95,5 @@ public class ProfissionalController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Erro ao buscar profissionais por especialização: " + ex.getMessage());
         }
-    }
-
+}
 }
