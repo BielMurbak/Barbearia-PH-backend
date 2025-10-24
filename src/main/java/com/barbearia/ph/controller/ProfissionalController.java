@@ -73,7 +73,7 @@ public class ProfissionalController {
                     .body("Erro ao deletar profissional com ID " + id + ": " + ex.getMessage());
         }
     }
-    
+
     @GetMapping("/nome")
     public ResponseEntity<?> findByNome(@RequestParam String nome) {
         try {
@@ -95,5 +95,5 @@ public class ProfissionalController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Erro ao buscar profissionais por especialização: " + ex.getMessage());
         }
-}
+    }
 }
