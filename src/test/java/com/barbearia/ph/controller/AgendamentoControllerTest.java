@@ -178,4 +178,143 @@ class AgendamentoControllerTest {
                 .andExpect(jsonPath("$.local", is("PH Premium")))
                 .andExpect(jsonPath("$.horario", is("15:00")));
     }
+
+    // ---------- TESTE PATCH ----------
+    @Test
+    @DisplayName("Deve fazer patch do local do agendamento")
+    void deveFazerPatchLocalAgendamento() throws Exception {
+        AgendamentoEntity salvo = agendamentoRepository.save(agendamento);
+
+        mockMvc.perform(patch("/api/agendamentos/{id}", salvo.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"local\": \"Nova Localização\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.local", is("Nova Localização")));
+    }
+
+    @Test
+    @DisplayName("Deve fazer patch do horário do agendamento")
+    void deveFazerPatchHorarioAgendamento() throws Exception {
+        AgendamentoEntity salvo = agendamentoRepository.save(agendamento);
+
+        mockMvc.perform(patch("/api/agendamentos/{id}", salvo.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"horario\": \"14:30\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.horario", is("14:30")));
+    }
+
+    @Test
+    @DisplayName("Deve fazer patch da data do agendamento")
+    void deveFazerPatchDataAgendamento() throws Exception {
+        AgendamentoEntity salvo = agendamentoRepository.save(agendamento);
+        String novaData = LocalDate.now().plusDays(5).toString();
+
+        mockMvc.perform(patch("/api/agendamentos/{id}", salvo.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"data\": \"" + novaData + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data", is(novaData)));
+    }
+
+    @Test
+    @DisplayName("Deve fazer patch do status para CANCELADO")
+    void deveFazerPatchStatusCancelado() throws Exception {
+        AgendamentoEntity salvo = agendamentoRepository.save(agendamento);
+
+        mockMvc.perform(patch("/api/agendamentos/{id}", salvo.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\": \"CANCELADO\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("CANCELADO")));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 404 ao fazer patch em agendamento inexistente")
+    void deveRetornar404PatchAgendamentoInexistente() throws Exception {
+        mockMvc.perform(patch("/api/agendamentos/999")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"local\": \"Teste\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    // ---------- TESTE FIND BY DATA ----------
+    @Test
+    @DisplayName("Deve retornar agendamentos por data")
+    void deveRetornarAgendamentosPorData() throws Exception {
+        AgendamentoEntity salvo = agendamentoRepository.save(agendamento);
+        String dataConsulta = salvo.getData().toString();
+
+        mockMvc.perform(get("/api/agendamentos/data")
+                        .param("data", dataConsulta))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].local", is("Barbearia PH")));
+    }
+
+    @Test
+    @DisplayName("Deve retornar lista vazia para data sem agendamentos")
+    void deveRetornarListaVaziaDataSemAgendamentos() throws Exception {
+        String dataSemAgendamentos = LocalDate.now().plusDays(10).toString();
+
+        mockMvc.perform(get("/api/agendamentos/data")
+                        .param("data", dataSemAgendamentos))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    // ---------- TESTE FIND BY CLIENTE ----------
+    @Test
+    @DisplayName("Deve retornar agendamentos por cliente")
+    void deveRetornarAgendamentosPorCliente() throws Exception {
+        AgendamentoEntity salvo = agendamentoRepository.save(agendamento);
+
+        mockMvc.perform(get("/api/agendamentos/cliente/{clienteId}", cliente.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].clienteEntity.nome", is("Gabriel")));
+    }
+
+    @Test
+    @DisplayName("Deve retornar lista vazia para cliente sem agendamentos")
+    void deveRetornarListaVaziaClienteSemAgendamentos() throws Exception {
+        ClienteEntity outroCliente = new ClienteEntity();
+        outroCliente.setNome("João");
+        outroCliente.setSobrenome("Silva");
+        outroCliente.setCelular("45 99999-9999");
+        ClienteEntity clienteSalvo = clienteRepository.save(outroCliente);
+
+        mockMvc.perform(get("/api/agendamentos/cliente/{clienteId}", clienteSalvo.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    // ---------- TESTE FIND BY PERIODO ----------
+    @Test
+    @DisplayName("Deve retornar agendamentos por período")
+    void deveRetornarAgendamentosPorPeriodo() throws Exception {
+        AgendamentoEntity salvo = agendamentoRepository.save(agendamento);
+        String dataInicio = LocalDate.now().toString();
+        String dataFim = LocalDate.now().plusDays(5).toString();
+
+        mockMvc.perform(get("/api/agendamentos/periodo")
+                        .param("dataInicio", dataInicio)
+                        .param("dataFim", dataFim))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].local", is("Barbearia PH")));
+    }
+
+    @Test
+    @DisplayName("Deve retornar lista vazia para período sem agendamentos")
+    void deveRetornarListaVaziaPeriodoSemAgendamentos() throws Exception {
+        String dataInicio = LocalDate.now().plusDays(10).toString();
+        String dataFim = LocalDate.now().plusDays(15).toString();
+
+        mockMvc.perform(get("/api/agendamentos/periodo")
+                        .param("dataInicio", dataInicio)
+                        .param("dataFim", dataFim))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
 }

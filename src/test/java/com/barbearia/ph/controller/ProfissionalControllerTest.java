@@ -19,6 +19,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -203,25 +204,60 @@ class ProfissionalControllerTest {
         profissional.setCelular("45 999806733");
         profissional.setEspecializacao(Especializacao.Corte);
 
-
         profissional = profissionalRepository.save(profissional);
-
 
         mockMvc.perform(get("/api/profissionais/especializacao")
                         .param("especializacao", profissional.getEspecializacao().name())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].especializacao").value("Corte"));
-
     }
 
+    // ---------- TESTES DE EXCEÇÃO ----------
+    @Test
+    @DisplayName("Deve retornar 400 ao buscar profissional com ID inexistente")
+    void deveRetornar400BuscarProfissionalInexistente() throws Exception {
+        mockMvc.perform(get("/api/profissionais/999")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("Erro ao buscar profissional")));
+    }
 
+    @Test
+    @DisplayName("Deve retornar 400 ao atualizar profissional inexistente")
+    void deveRetornar400AtualizarProfissionalInexistente() throws Exception {
+        ProfissionalEntity profissional = new ProfissionalEntity();
+        profissional.setNome("Teste");
+        profissional.setSobrenome("Silva");
+        profissional.setCelular("45 99999-9999");
+        profissional.setEspecializacao(Especializacao.Corte);
 
+        String json = objectMapper.writeValueAsString(profissional);
 
+        mockMvc.perform(put("/api/profissionais/999")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("Erro ao atualizar profissional")));
+    }
 
+    @Test
+    @DisplayName("Deve retornar 400 ao deletar profissional inexistente")
+    void deveRetornar400DeletarProfissionalInexistente() throws Exception {
+        mockMvc.perform(delete("/api/profissionais/999")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("Erro ao deletar profissional")));
+    }
 
-
-
-
+    @Test
+    @DisplayName("Deve retornar 400 com especialização inválida")
+    void deveRetornar400EspecializacaoInvalida() throws Exception {
+        mockMvc.perform(get("/api/profissionais/especializacao")
+                        .param("especializacao", "INVALIDA")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("Erro ao buscar profissionais por especialização")));
+    }
 
 }
