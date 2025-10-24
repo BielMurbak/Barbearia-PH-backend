@@ -110,4 +110,43 @@ class ServicoServiceTest {
 
         verify(servicoRepository).deleteById(1L);
     }
+
+    @Test
+    @DisplayName("TESTE DE UNIDADE – Deve buscar serviços por descrição")
+    void deveBuscarServicosPorDescricao() {
+        when(servicoRepository.findByDescricaoIgnoreCaseContaining("Corte")).thenReturn(List.of(servico));
+
+        List<ServicoEntity> resultado = servicoService.findByDescricao("Corte");
+
+        assertFalse(resultado.isEmpty());
+        assertEquals(1, resultado.size());
+        assertEquals("Corte de Cabelo", resultado.get(0).getDescricao());
+        verify(servicoRepository, times(1)).findByDescricaoIgnoreCaseContaining("Corte");
+    }
+
+    @Test
+    @DisplayName("TESTE DE UNIDADE – Deve buscar serviços por duração máxima")
+    void deveBuscarServicosPorDuracaoMaxima() {
+        when(servicoRepository.findByMinDeDuracaoLessThanEqual(45)).thenReturn(List.of(servico));
+
+        List<ServicoEntity> resultado = servicoService.findByDuracaoMaxima(45);
+
+        assertFalse(resultado.isEmpty());
+        assertEquals(1, resultado.size());
+        assertEquals(30, resultado.get(0).getMinDeDuracao());
+        verify(servicoRepository, times(1)).findByMinDeDuracaoLessThanEqual(45);
+    }
+
+    @Test
+    @DisplayName("TESTE DE UNIDADE – Deve buscar serviços por faixa de duração")
+    void deveBuscarServicosPorFaixaDuracao() {
+        when(servicoRepository.findByDuracaoRange(15, 45)).thenReturn(List.of(servico));
+
+        List<ServicoEntity> resultado = servicoService.findByDuracaoRange(15, 45);
+
+        assertFalse(resultado.isEmpty());
+        assertEquals(1, resultado.size());
+        assertEquals(30, resultado.get(0).getMinDeDuracao());
+        verify(servicoRepository, times(1)).findByDuracaoRange(15, 45);
+    }
 }

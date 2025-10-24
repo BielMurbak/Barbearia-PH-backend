@@ -99,6 +99,31 @@ class AgendamentoServiceTest {
     }
 
     @Test
+    @DisplayName("Deve definir status como CONCLUIDO quando agendamento já passou")
+    void deveDefinirStatusConcluidoQuandoAgendamentoJaPassou() {
+        // Criar agendamento no passado
+        AgendamentoEntity agendamentoPassado = new AgendamentoEntity();
+        agendamentoPassado.setId(1L);
+        agendamentoPassado.setData(LocalDate.now().minusDays(1)); // Data no passado
+        agendamentoPassado.setHorario("10:00");
+        agendamentoPassado.setLocal("Barbearia PH");
+        agendamentoPassado.setClienteEntity(cliente);
+        agendamentoPassado.setProfissionalServicoEntity(profServ);
+
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(profissionalServicoRepository.findById(1L)).thenReturn(Optional.of(profServ));
+        when(agendamentoRepository.findByDataAndProfissionalServicoEntity_ProfissionalEntity_Id(
+                any(), anyLong())).thenReturn(List.of());
+        when(agendamentoRepository.save(any())).thenReturn(agendamentoPassado);
+
+        AgendamentoEntity salvo = agendamentoService.save(agendamentoPassado);
+
+        assertNotNull(salvo);
+        assertEquals(AgendamentoEntity.StatusAgendamento.CONCLUIDO, salvo.getStatus());
+        verify(agendamentoRepository, times(1)).save(any());
+    }
+
+    @Test
     @DisplayName("Deve lançar exceção quando cliente não existir no save")
     void deveLancarExcecaoQuandoClienteNaoExisteNoSave() {
         when(clienteRepository.findById(1L)).thenReturn(Optional.empty());
@@ -134,6 +159,29 @@ class AgendamentoServiceTest {
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> agendamentoService.save(agendamento));
         assertTrue(ex.getMessage().contains("Horário indisponível"));
+    }
+
+    @Test
+    @DisplayName("Deve salvar agendamento quando não há conflito de horário")
+    void deveSalvarAgendamentoQuandoNaoHaConflito() {
+        // Criar agendamento existente em horário que não conflita
+        AgendamentoEntity existente = new AgendamentoEntity();
+        existente.setId(2L);
+        existente.setData(agendamento.getData());
+        existente.setHorario("08:00"); // Horário que não conflita com 10:00
+        existente.setClienteEntity(cliente);
+        existente.setProfissionalServicoEntity(profServ);
+
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(profissionalServicoRepository.findById(1L)).thenReturn(Optional.of(profServ));
+        when(agendamentoRepository.findByDataAndProfissionalServicoEntity_ProfissionalEntity_Id(
+                any(), anyLong())).thenReturn(List.of(existente));
+        when(agendamentoRepository.save(any())).thenReturn(agendamento);
+
+        AgendamentoEntity salvo = agendamentoService.save(agendamento);
+
+        assertNotNull(salvo);
+        verify(agendamentoRepository, times(1)).save(any());
     }
 
 // ---------- TESTE DO FINDBYID ----------
@@ -238,6 +286,16 @@ class AgendamentoServiceTest {
     }
 
     @Test
+    @DisplayName("TESTE DE INTEGRAÇÃO – Deve lançar exceção quando cliente não existe no findByCliente")
+    void deveLancarExcecaoQuandoClienteNaoExisteNoFindByCliente() {
+        when(clienteRepository.findById(99L)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, 
+            () -> agendamentoService.findByCliente(99L));
+        assertEquals("Cliente não encontrado", ex.getMessage());
+    }
+
+    @Test
     @DisplayName("TESTE DE INTEGRAÇÃO – Deve buscar agendamentos por período")
     void deveBuscarAgendamentosPorPeriodo() {
         LocalDate inicio = LocalDate.now();
@@ -285,6 +343,20 @@ class AgendamentoServiceTest {
         when(agendamentoRepository.save(any())).thenReturn(agendamento);
 
         Map<String, Object> updates = Map.of("status", "CANCELADO");
+
+        Optional<AgendamentoEntity> resultado = agendamentoService.patch(1L, updates);
+
+        assertTrue(resultado.isPresent());
+        verify(agendamentoRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("TESTE DE INTEGRAÇÃO – Deve fazer patch com status diferente de cancelado")
+    void deveFazerPatchComStatusDiferenteDeCancelado() {
+        when(agendamentoRepository.findById(1L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.save(any())).thenReturn(agendamento);
+
+        Map<String, Object> updates = Map.of("status", "PENDENTE");
 
         Optional<AgendamentoEntity> resultado = agendamentoService.patch(1L, updates);
 
