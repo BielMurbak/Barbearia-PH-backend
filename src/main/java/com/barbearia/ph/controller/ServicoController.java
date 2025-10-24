@@ -19,33 +19,58 @@ public class ServicoController {
     private final ServicoService servicoService;
 
     @PostMapping
-    public ResponseEntity<ServicoEntity> save(@Valid @RequestBody ServicoEntity servicoEntity) {
-        ServicoEntity salvo = servicoService.save(servicoEntity);
-        return new ResponseEntity<>(salvo, HttpStatus.CREATED);
+    public ResponseEntity<?> save(@Valid @RequestBody ServicoEntity servicoEntity) {
+        try {
+            ServicoEntity salvo = servicoService.save(servicoEntity);
+            return new ResponseEntity<>(salvo, HttpStatus.CREATED);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao salvar serviço: " + ex.getMessage());
+        }
     }
 
     @GetMapping
-    public ResponseEntity<List<ServicoEntity>> findAll() {
-        List<ServicoEntity> servicos = servicoService.findAll();
-        return ResponseEntity.ok(servicos);
+    public ResponseEntity<?> findAll() {
+        try {
+            List<ServicoEntity> servicos = servicoService.findAll();
+            return ResponseEntity.ok(servicos);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao listar serviços: " + ex.getMessage());
+        }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ServicoEntity> findById(@PathVariable Long id) {
-        ServicoEntity servico = servicoService.findById(id);
-        return ResponseEntity.ok(servico);
+    public ResponseEntity<?> findById(@PathVariable Long id) {
+        try {
+            ServicoEntity servico = servicoService.findById(id);
+            return ResponseEntity.ok(servico);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao buscar serviço: " + ex.getMessage());
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ServicoEntity> update(@PathVariable Long id, @Valid @RequestBody ServicoEntity servicoEntity) {
-        ServicoEntity atualizado = servicoService.update(id, servicoEntity);
-        return ResponseEntity.ok(atualizado);
+    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody ServicoEntity servicoEntity) {
+        try {
+            ServicoEntity atualizado = servicoService.update(id, servicoEntity);
+            return ResponseEntity.ok(atualizado);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao atualizar serviço: " + ex.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        servicoService.delete(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        try {
+            servicoService.delete(id);
+            return ResponseEntity.noContent().build();
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro ao deletar serviço: " + ex.getMessage());
+        }
     }
 
     @GetMapping("/descricao")

@@ -20,5 +20,17 @@ public abstract class PessoaAbstract {
     @NotBlank(message = "O campo celular é obrigatório")
     private String celular;
 
+    public String getNomeCompleto() {
+        if (nome == null || sobrenome == null) {
+            return "";
+        }
+        return nome.trim() + " " + sobrenome.trim();
+    }
 
+    public boolean isValidCelular() {
+        if (celular == null || celular.trim().isEmpty()) {
+            return false;
+        }
+        return celular.replaceAll("[^0-9]", "").length() >= 10;
+    }
 }

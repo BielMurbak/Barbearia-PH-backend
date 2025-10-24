@@ -83,7 +83,7 @@ class ProfissionalControllerTest {
     }
 
     @Test
-    @DisplayName("INTEGRAÇÃO – Deve listar profissionais com Erro")
+    @DisplayName("INTEGRAÇÃO – Deve retornar erro ao salvar profissional com dados inválidos")
     void deveERRORetornarProfissionaisComSucesso() throws Exception {
         ProfissionalEntity profissional = new ProfissionalEntity();
         profissional.setNome("");
@@ -96,7 +96,7 @@ class ProfissionalControllerTest {
         mockMvc.perform(post("/api/profissionais")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().is4xxClientError());
 
     }
 

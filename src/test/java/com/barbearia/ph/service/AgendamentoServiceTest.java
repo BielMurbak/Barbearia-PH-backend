@@ -13,6 +13,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -182,7 +183,7 @@ class AgendamentoServiceTest {
 // ---------- TESTE DO UPDATE ----------
 
     @Test
-    @DisplayName("Deve atualizar agendamento com sucesso")
+    @DisplayName("TESTE DE INTEGRAÇÃO – Deve atualizar agendamento com sucesso")
     void deveAtualizarAgendamentoComSucesso() {
         when(agendamentoRepository.findById(1L)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(any())).thenReturn(agendamento);
@@ -198,6 +199,164 @@ class AgendamentoServiceTest {
 
         assertEquals("PH Premium", resultado.getLocal());
         verify(agendamentoRepository, times(1)).save(any());
+    }
+
+    @Test
+    @DisplayName("TESTE DE INTEGRAÇÃO – Deve retornar lista de agendamentos")
+    void deveRetornarListaDeAgendamentos() {
+        when(agendamentoRepository.findAll()).thenReturn(List.of(agendamento));
+
+        List<AgendamentoEntity> resultado = agendamentoService.findAll();
+
+        assertFalse(resultado.isEmpty());
+        assertEquals(1, resultado.size());
+        verify(agendamentoRepository, times(1)).findAll();
+    }
+
+    @Test
+    @DisplayName("TESTE DE INTEGRAÇÃO – Deve buscar agendamentos por data")
+    void deveBuscarAgendamentosPorData() {
+        LocalDate data = LocalDate.now().plusDays(1);
+        when(agendamentoRepository.findByData(data)).thenReturn(List.of(agendamento));
+
+        List<AgendamentoEntity> resultado = agendamentoService.findByData(data);
+
+        assertEquals(1, resultado.size());
+        verify(agendamentoRepository).findByData(data);
+    }
+
+    @Test
+    @DisplayName("TESTE DE INTEGRAÇÃO – Deve buscar agendamentos por cliente")
+    void deveBuscarAgendamentosPorCliente() {
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(agendamentoRepository.findByClienteEntity(cliente)).thenReturn(List.of(agendamento));
+
+        List<AgendamentoEntity> resultado = agendamentoService.findByCliente(1L);
+
+        assertEquals(1, resultado.size());
+        verify(agendamentoRepository).findByClienteEntity(cliente);
+    }
+
+    @Test
+    @DisplayName("TESTE DE INTEGRAÇÃO – Deve buscar agendamentos por período")
+    void deveBuscarAgendamentosPorPeriodo() {
+        LocalDate inicio = LocalDate.now();
+        LocalDate fim = LocalDate.now().plusDays(7);
+        when(agendamentoRepository.findAgendamentosPorPeriodo(inicio, fim)).thenReturn(List.of(agendamento));
+
+        List<AgendamentoEntity> resultado = agendamentoService.findByPeriodo(inicio, fim);
+
+        assertEquals(1, resultado.size());
+        verify(agendamentoRepository).findAgendamentosPorPeriodo(inicio, fim);
+    }
+
+    @Test
+    @DisplayName("TESTE DE INTEGRAÇÃO – Deve buscar agendamentos com detalhes")
+    void deveBuscarAgendamentosComDetalhes() {
+        when(agendamentoRepository.findAllWithDetails()).thenReturn(List.of(agendamento));
+
+        List<AgendamentoEntity> resultado = agendamentoService.findAllWithDetails();
+
+        assertEquals(1, resultado.size());
+        verify(agendamentoRepository).findAllWithDetails();
+    }
+
+    @Test
+    @DisplayName("TESTE DE INTEGRAÇÃO – Deve fazer patch de agendamento com sucesso")
+    void deveFazerPatchComSucesso() {
+        when(agendamentoRepository.findById(1L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.save(any())).thenReturn(agendamento);
+
+        Map<String, Object> updates = Map.of(
+            "local", "Nova Localização",
+            "horario", "14:00"
+        );
+
+        Optional<AgendamentoEntity> resultado = agendamentoService.patch(1L, updates);
+
+        assertTrue(resultado.isPresent());
+        verify(agendamentoRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("TESTE DE INTEGRAÇÃO – Deve fazer patch com status cancelado")
+    void deveFazerPatchComStatusCancelado() {
+        when(agendamentoRepository.findById(1L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.save(any())).thenReturn(agendamento);
+
+        Map<String, Object> updates = Map.of("status", "CANCELADO");
+
+        Optional<AgendamentoEntity> resultado = agendamentoService.patch(1L, updates);
+
+        assertTrue(resultado.isPresent());
+        verify(agendamentoRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("TESTE DE INTEGRAÇÃO – Deve fazer patch com clienteId")
+    void deveFazerPatchComClienteId() {
+        when(agendamentoRepository.findById(1L)).thenReturn(Optional.of(agendamento));
+        when(clienteRepository.findById(2L)).thenReturn(Optional.of(cliente));
+        when(agendamentoRepository.save(any())).thenReturn(agendamento);
+
+        Map<String, Object> updates = Map.of("clienteId", 2L);
+
+        Optional<AgendamentoEntity> resultado = agendamentoService.patch(1L, updates);
+
+        assertTrue(resultado.isPresent());
+        verify(clienteRepository).findById(2L);
+    }
+
+    @Test
+    @DisplayName("TESTE DE INTEGRAÇÃO – Deve fazer patch com profissionalServicoId")
+    void deveFazerPatchComProfissionalServicoId() {
+        when(agendamentoRepository.findById(1L)).thenReturn(Optional.of(agendamento));
+        when(profissionalServicoRepository.findById(2L)).thenReturn(Optional.of(profServ));
+        when(agendamentoRepository.save(any())).thenReturn(agendamento);
+
+        Map<String, Object> updates = Map.of("profissionalServicoId", 2L);
+
+        Optional<AgendamentoEntity> resultado = agendamentoService.patch(1L, updates);
+
+        assertTrue(resultado.isPresent());
+        verify(profissionalServicoRepository).findById(2L);
+    }
+
+    @Test
+    @DisplayName("TESTE DE INTEGRAÇÃO – Deve retornar empty quando agendamento não existe no patch")
+    void deveRetornarEmptyQuandoAgendamentoNaoExisteNoPatch() {
+        when(agendamentoRepository.findById(99L)).thenReturn(Optional.empty());
+
+        Map<String, Object> updates = Map.of("local", "Novo Local");
+        Optional<AgendamentoEntity> resultado = agendamentoService.patch(99L, updates);
+
+        assertFalse(resultado.isPresent());
+    }
+
+    @Test
+    @DisplayName("TESTE DE INTEGRAÇÃO – Deve lançar exceção quando cliente não existe no patch")
+    void deveLancarExcecaoQuandoClienteNaoExisteNoPatch() {
+        when(agendamentoRepository.findById(1L)).thenReturn(Optional.of(agendamento));
+        when(clienteRepository.findById(99L)).thenReturn(Optional.empty());
+
+        Map<String, Object> updates = Map.of("clienteId", 99L);
+
+        RuntimeException ex = assertThrows(RuntimeException.class, 
+            () -> agendamentoService.patch(1L, updates));
+        assertEquals("Cliente não encontrado", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("TESTE DE INTEGRAÇÃO – Deve lançar exceção quando profissionalServico não existe no patch")
+    void deveLancarExcecaoQuandoProfissionalServicoNaoExisteNoPatch() {
+        when(agendamentoRepository.findById(1L)).thenReturn(Optional.of(agendamento));
+        when(profissionalServicoRepository.findById(99L)).thenReturn(Optional.empty());
+
+        Map<String, Object> updates = Map.of("profissionalServicoId", 99L);
+
+        RuntimeException ex = assertThrows(RuntimeException.class, 
+            () -> agendamentoService.patch(1L, updates));
+        assertEquals("ProfissionalServiço não encontrado", ex.getMessage());
     }
 
 }
