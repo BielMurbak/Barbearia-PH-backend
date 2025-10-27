@@ -260,4 +260,17 @@ class ProfissionalControllerTest {
                 .andExpect(content().string(containsString("Erro ao buscar profissionais por especialização")));
     }
 
+    @Test
+    @DisplayName("Deve retornar 400 ao salvar profissional com JSON inválido")
+    void deveRetornar400SalvarProfissionalJsonInvalido() throws Exception {
+        // JSON malformado para forçar exceção no parsing
+        String jsonInvalido = "{\"nome\": \"João\", \"sobrenome\": \"Silva\", \"celular\": \"45 99999-9999\", \"especializacao\": \"INVALIDA\"}";
+
+        mockMvc.perform(post("/api/profissionais")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonInvalido))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("Erro de negócio")));
+    }
+
 }
