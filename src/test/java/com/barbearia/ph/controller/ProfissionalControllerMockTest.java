@@ -3,48 +3,46 @@ package com.barbearia.ph.controller;
 import com.barbearia.ph.service.ProfissionalService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
-import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(ProfissionalController.class)
+@ExtendWith(MockitoExtension.class)
 class ProfissionalControllerMockTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
+    @Mock
     private ProfissionalService profissionalService;
+
+    @InjectMocks
+    private ProfissionalController profissionalController;
 
     @Test
     @DisplayName("Deve retornar 400 quando service lança exceção no findByNome")
-    void deveRetornar400QuandoServiceLancaExcecaoFindByNome() throws Exception {
+    void deveRetornar400QuandoServiceLancaExcecaoFindByNome() {
         when(profissionalService.findByNome("teste"))
                 .thenThrow(new RuntimeException("Erro simulado"));
 
-        mockMvc.perform(get("/api/profissionais/nome")
-                        .param("nome", "teste")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string(containsString("Erro ao buscar profissionais por nome")));
+        ResponseEntity<?> response = profissionalController.findByNome("teste");
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Erro ao buscar profissionais por nome: Erro simulado", response.getBody());
     }
 
     @Test
     @DisplayName("Deve retornar 400 quando service lança exceção no findAll")
-    void deveRetornar400QuandoServiceLancaExcecaoFindAll() throws Exception {
+    void deveRetornar400QuandoServiceLancaExcecaoFindAll() {
         when(profissionalService.findAll())
                 .thenThrow(new RuntimeException("Erro simulado"));
 
-        mockMvc.perform(get("/api/profissionais")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string(containsString("Erro ao listar profissionais")));
+        ResponseEntity<?> response = profissionalController.findAll();
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Erro ao listar profissionais: Erro simulado", response.getBody());
     }
 }
