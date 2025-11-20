@@ -4,6 +4,7 @@ package com.barbearia.ph.service;
 import com.barbearia.ph.model.ClienteEntity;
 import com.barbearia.ph.repository.ClienteRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,9 +14,17 @@ import java.util.List;
 public class ClienteService {
 
     private final ClienteRepository clienteRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public ClienteEntity save(ClienteEntity clienteEntity){
+
+        if (clienteEntity.getSenha() != null) {
+            String senhaCriptografada = passwordEncoder.encode(clienteEntity.getSenha());
+            clienteEntity.setSenha(senhaCriptografada);
+        }
         return clienteRepository.save(clienteEntity);
+
+
     }
 
     public List<ClienteEntity> findAll(){

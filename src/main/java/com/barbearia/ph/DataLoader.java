@@ -30,6 +30,7 @@ public class DataLoader implements CommandLineRunner {
             profissional.setNome("Patrick");
             profissional.setSobrenome("Henrique");
             profissional.setCelular("+55 (45) 9857-3445");
+            profissional.setSenha("Patrick123");
             profissional.setEspecializacao(Especializacao.Corte);
             profissional = profissionalRepository.save(profissional);
             System.out.println("Profissional criado!");

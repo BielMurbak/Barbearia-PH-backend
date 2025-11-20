@@ -15,6 +15,8 @@ public class ProfissionalService {
     private final ProfissionalRepository profissionalRepository;
 
     public ProfissionalEntity save(ProfissionalEntity profissionalEntity){
+
+
         return profissionalRepository.save(profissionalEntity);
     }
 

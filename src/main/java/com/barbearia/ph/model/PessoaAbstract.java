@@ -20,6 +20,9 @@ public abstract class PessoaAbstract {
     @NotBlank(message = "O campo celular é obrigatório")
     private String celular;
 
+    @NotBlank(message = "O campo de senha deve ser obrigatorio")
+    private String senha;
+
     public String getNomeCompleto() {
         if (nome == null || sobrenome == null) {
             return "";
