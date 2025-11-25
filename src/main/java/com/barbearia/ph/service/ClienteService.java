@@ -17,14 +17,13 @@ public class ClienteService {
     private final PasswordEncoder passwordEncoder;
 
     public ClienteEntity save(ClienteEntity clienteEntity){
-
-        if (clienteEntity.getSenha() != null) {
+        
+        if (clienteEntity.getSenha() != null && !clienteEntity.getSenha().trim().isEmpty()) {
             String senhaCriptografada = passwordEncoder.encode(clienteEntity.getSenha());
             clienteEntity.setSenha(senhaCriptografada);
         }
+        
         return clienteRepository.save(clienteEntity);
-
-
     }
 
     public List<ClienteEntity> findAll(){

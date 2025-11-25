@@ -24,6 +24,7 @@ public class AgendamentoService {
     private final AgendamentoRepository agendamentoRepository;
     private final ClienteRepository clienteRepository;
     private final ProfissionalServicoRepository profissionalServicoRepository;
+    private final ClienteService clienteService;
 
     public AgendamentoEntity save(AgendamentoEntity agendamento) {
         ClienteEntity cliente = clienteRepository.findById(agendamento.getClienteEntity().getId())

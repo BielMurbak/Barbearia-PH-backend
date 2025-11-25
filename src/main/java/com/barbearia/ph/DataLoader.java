@@ -2,6 +2,7 @@ package com.barbearia.ph;
 
 import com.barbearia.ph.model.*;
 import com.barbearia.ph.repository.*;
+import com.barbearia.ph.service.ProfissionalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -11,6 +12,9 @@ public class DataLoader implements CommandLineRunner {
 
     @Autowired
     private ProfissionalRepository profissionalRepository;
+    
+    @Autowired
+    private ProfissionalService profissionalService;
     
     @Autowired
     private ServicoRepository servicoRepository;
@@ -32,7 +36,7 @@ public class DataLoader implements CommandLineRunner {
             profissional.setCelular("+55 (45) 9857-3445");
             profissional.setSenha("Patrick123");
             profissional.setEspecializacao(Especializacao.Corte);
-            profissional = profissionalRepository.save(profissional);
+            profissional = profissionalService.save(profissional);
             System.out.println("Profissional criado!");
         } else {
             profissional = profissionalRepository.findAll().get(0);
