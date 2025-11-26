@@ -2,12 +2,15 @@ package com.barbearia.ph;
 
 import com.barbearia.ph.model.*;
 import com.barbearia.ph.repository.*;
-import com.barbearia.ph.repository.*;
+import com.barbearia.ph.service.*;
 import com.barbearia.ph.service.ProfissionalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 
 @Component
@@ -31,6 +34,9 @@ public class DataLoader implements CommandLineRunner {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private AgendamentoRepository agendamentoRepository;
+
     @Override
     public void run(String... args) throws Exception {
         System.out.println("=== DataLoader executando ===");
@@ -53,17 +59,27 @@ public class DataLoader implements CommandLineRunner {
             System.out.println("Profissional já existe!");
         }
 
-        // Criar cliente de teste
+        // Criar clientes de teste
         if (clienteRepository.count() == 0) {
-            System.out.println("Criando cliente de teste...");
-            ClienteEntity cliente = new ClienteEntity();
-            cliente.setNome("Gabriel");
-            cliente.setSobrenome("Murbak");
-            cliente.setCelular("(45) 99935-5808");
-            cliente.setSenha(passwordEncoder.encode("123456"));
-            cliente.setRole(Role.ROLE_CLIENTE);
-            clienteRepository.save(cliente);
-            System.out.println("Cliente criado!");
+            System.out.println("Criando clientes de teste...");
+            
+            ClienteEntity cliente1 = new ClienteEntity();
+            cliente1.setNome("Gabriel");
+            cliente1.setSobrenome("Murbak");
+            cliente1.setCelular("(45) 99935-5808");
+            cliente1.setSenha(passwordEncoder.encode("123456"));
+            cliente1.setRole(Role.ROLE_CLIENTE);
+            clienteRepository.save(cliente1);
+            
+            ClienteEntity cliente2 = new ClienteEntity();
+            cliente2.setNome("Rafael");
+            cliente2.setSobrenome("Scarabelot");
+            cliente2.setCelular("(45) 99999-9999");
+            cliente2.setSenha(passwordEncoder.encode("abcdef"));
+            cliente2.setRole(Role.ROLE_CLIENTE);
+            clienteRepository.save(cliente2);
+            
+            System.out.println("Clientes criados!");
         }
 
         // Criar serviços

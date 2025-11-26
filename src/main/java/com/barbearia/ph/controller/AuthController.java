@@ -31,7 +31,8 @@ public class AuthController {
             // Verifica senha
             if (passwordEncoder.matches(request.getSenha(), userDetails.getPassword())) {
                 String token = jwtUtil.generateToken(userDetails.getUsername());
-                return ResponseEntity.ok(new LoginResponse(token));
+                String role = userDetails.getAuthorities().iterator().next().getAuthority();
+                return ResponseEntity.ok(new LoginResponse(token, role));
             } else {
                 return ResponseEntity.badRequest().body("Senha incorreta");
             }
@@ -39,6 +40,22 @@ public class AuthController {
         } catch (Exception ex) {
             System.out.println("Erro no login: " + ex.getMessage());
             return ResponseEntity.badRequest().body("Usuário não encontrado: " + ex.getMessage());
+        }
+    }
+
+    @PostMapping("/register/cliente")
+    public ResponseEntity<?> registerCliente(@RequestBody RegisterClienteRequest request) {
+        try {
+            // Criptografa a senha
+            String senhaCriptografada = passwordEncoder.encode(request.getSenha());
+            request.setSenha(senhaCriptografada);
+            
+            // Aqui você chamaria o serviço para salvar o cliente
+            // ClienteEntity cliente = clienteService.save(request.toEntity());
+            
+            return ResponseEntity.ok("Cliente registrado com sucesso");
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body("Erro ao registrar cliente: " + ex.getMessage());
         }
     }
 
@@ -65,9 +82,27 @@ public class AuthController {
 
     public static class LoginResponse {
         private String token;
+        private String role;
 
-        public LoginResponse(String token) { this.token = token; }
+        public LoginResponse(String token, String role) { 
+            this.token = token; 
+            this.role = role;
+        }
         public String getToken() { return token; }
+        public String getRole() { return role; }
+    }
+
+    public static class RegisterClienteRequest {
+        private String nome;
+        private String celular;
+        private String senha;
+
+        public String getNome() { return nome; }
+        public void setNome(String nome) { this.nome = nome; }
+        public String getCelular() { return celular; }
+        public void setCelular(String celular) { this.celular = celular; }
+        public String getSenha() { return senha; }
+        public void setSenha(String senha) { this.senha = senha; }
     }
 
     public static class ValidarRequest {
