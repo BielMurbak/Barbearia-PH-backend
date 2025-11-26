@@ -156,4 +156,11 @@ public class AgendamentoService {
             }
         }
     }
+
+    public Long getClienteIdByCelular(String celular) {
+        ClienteEntity cliente = clienteRepository.findByCelular(celular)
+                .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
+        return cliente.getId();
+    }
+
 }

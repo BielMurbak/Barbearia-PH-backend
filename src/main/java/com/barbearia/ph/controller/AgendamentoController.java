@@ -6,6 +6,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -35,8 +37,19 @@ public class AgendamentoController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AgendamentoEntity>> findAll() {
-        return ResponseEntity.ok(agendamentoService.findAllWithDetails());
+    public ResponseEntity<List<AgendamentoEntity>> findAll(@AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails user) {
+
+        boolean isBarbeiro = user.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_BARBEIRO"));
+
+        if (isBarbeiro) {
+            // Barbeiro vê todos os agendamentos
+            return ResponseEntity.ok(agendamentoService.findAllWithDetails());
+        } else {
+            // Cliente vê apenas os próprios agendamentos
+            Long clienteId = agendamentoService.getClienteIdByCelular(user.getUsername());
+            return ResponseEntity.ok(agendamentoService.findByCliente(clienteId));
+        }
     }
 
     @GetMapping("/{id}")

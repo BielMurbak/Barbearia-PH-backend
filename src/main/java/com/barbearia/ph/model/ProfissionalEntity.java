@@ -23,6 +23,8 @@ public class ProfissionalEntity extends PessoaAbstract {
     @NotNull(message = "O campo especialização é obrigatório")
     private Especializacao especializacao;
 
+    @Enumerated(EnumType.STRING)
+    private Role role = Role.ROLE_ADMIN;
 
     @OneToMany(mappedBy = "profissionalEntity", cascade = CascadeType.ALL)
     @JsonIgnore

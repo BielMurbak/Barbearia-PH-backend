@@ -53,4 +53,10 @@ public class ProfissionalService {
     public List<ProfissionalEntity> findByEspecializacaoAndNome(com.barbearia.ph.model.Especializacao especializacao, String nome){
         return profissionalRepository.findByEspecializacaoAndNomeContaining(especializacao, nome);
     }
+
+    public ProfissionalEntity findByCelular(String celular){
+        return profissionalRepository.findByCelular(celular)
+                .orElseThrow(() -> new RuntimeException("Profissional não encontrado"));
+    }
+
 }
