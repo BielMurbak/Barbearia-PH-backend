@@ -94,10 +94,22 @@ public class AgendamentoService {
         agendamento.setData(agendamentoEntity.getData());
         agendamento.setHorario(agendamentoEntity.getHorario());
         agendamento.setLocal(agendamentoEntity.getLocal());
-        agendamento.setClienteEntity(agendamentoEntity.getClienteEntity());
-        agendamento.setProfissionalServicoEntity(agendamentoEntity.getProfissionalServicoEntity());
+        
+        // Buscar cliente completo do banco ao invés de usar o incompleto do request
+        if (agendamentoEntity.getClienteEntity() != null && agendamentoEntity.getClienteEntity().getId() != null) {
+            ClienteEntity cliente = clienteRepository.findById(agendamentoEntity.getClienteEntity().getId())
+                    .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
+            agendamento.setClienteEntity(cliente);
+        }
+        
+        // Buscar profissionalServico completo do banco
+        if (agendamentoEntity.getProfissionalServicoEntity() != null && agendamentoEntity.getProfissionalServicoEntity().getId() != null) {
+            ProfissionalServicoEntity profServ = profissionalServicoRepository.findById(agendamentoEntity.getProfissionalServicoEntity().getId())
+                    .orElseThrow(() -> new RuntimeException("ProfissionalServico não encontrado"));
+            agendamento.setProfissionalServicoEntity(profServ);
+        }
 
-        atualizarStatus(agendamento); // <-- Atualiza status ao modificar
+        atualizarStatus(agendamento);
         return agendamentoRepository.save(agendamento);
     }
 

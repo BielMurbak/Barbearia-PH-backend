@@ -2,6 +2,7 @@ package com.barbearia.ph.service;
 
 
 import com.barbearia.ph.model.ClienteEntity;
+import com.barbearia.ph.model.Role;
 import com.barbearia.ph.repository.ClienteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +22,11 @@ public class ClienteService {
         if (clienteEntity.getSenha() != null && !clienteEntity.getSenha().trim().isEmpty()) {
             String senhaCriptografada = passwordEncoder.encode(clienteEntity.getSenha());
             clienteEntity.setSenha(senhaCriptografada);
+        }
+        
+        // Definir role padrão para novos clientes
+        if (clienteEntity.getRole() == null) {
+            clienteEntity.setRole(Role.ROLE_CLIENTE);
         }
         
         return clienteRepository.save(clienteEntity);
