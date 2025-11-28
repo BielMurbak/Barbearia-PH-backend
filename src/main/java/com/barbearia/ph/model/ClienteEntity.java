@@ -27,7 +27,7 @@ public class ClienteEntity extends PessoaAbstract implements UserDetails {
     private List<AgendamentoEntity> agendamentos;
 
     @Enumerated(EnumType.STRING)
-    private Role role;
+    private Role role = Role.ROLE_CLIENTE;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
