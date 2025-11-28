@@ -12,7 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/profissionais/servicos")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "*")
 public class ProfissionalServicoController {
 
     private final ProfissionalServicoService profissionalServicoService;

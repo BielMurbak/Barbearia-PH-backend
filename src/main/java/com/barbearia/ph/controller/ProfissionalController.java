@@ -14,7 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/profissionais")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "*")
 public class ProfissionalController {
 
     private final ProfissionalService profissionalService;
