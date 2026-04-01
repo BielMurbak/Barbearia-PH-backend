@@ -16,7 +16,9 @@ public interface ProfissionalRepository extends JpaRepository<ProfissionalEntity
     List<ProfissionalEntity> findByEspecializacao(Especializacao especializacao);
 
     Optional<ProfissionalEntity> findByCelular(String celular);
-    
+
+    Optional<ProfissionalEntity> findFirstByOrderByIdAsc();
+
     @Query("SELECT p FROM ProfissionalEntity p WHERE p.especializacao = :especializacao AND p.nome LIKE %:nome%")
     List<ProfissionalEntity> findByEspecializacaoAndNomeContaining(@Param("especializacao") Especializacao especializacao, @Param("nome") String nome);
 }
