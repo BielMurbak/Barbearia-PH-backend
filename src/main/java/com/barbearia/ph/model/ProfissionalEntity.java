@@ -34,15 +34,6 @@ public class ProfissionalEntity extends PessoaAbstract implements UserDetails {
     @JsonIgnore
     private List<ProfissionalServicoEntity> profissionalServicos;
 
-    @ManyToMany
-    @JoinTable(
-            name = "profissional_servico_direto",
-            joinColumns = @JoinColumn(name = "profissional_id"),
-            inverseJoinColumns = @JoinColumn(name = "servico_id")
-    )
-    @JsonIgnore
-    private List<ServicoEntity> servicos;
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));

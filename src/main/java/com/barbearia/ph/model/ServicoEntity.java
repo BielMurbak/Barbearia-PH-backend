@@ -34,7 +34,4 @@ public class ServicoEntity {
     private List<ProfissionalServicoEntity> profissionalServicoEntity;
 
 
-    @ManyToMany(mappedBy = "servicos")
-    @JsonIgnore
-    private List<ProfissionalEntity> profissionais;
 }
