@@ -35,6 +35,10 @@ public class AgendamentoEntity {
 
     @Enumerated(EnumType.STRING)
     private StatusAgendamento status;
+    
+    private String observacoes; // Para salvar serviços completos (principal + adicionais)
+    
+    private Double preco; // Para salvar preço total calculado
 
     public enum StatusAgendamento {
         PENDENTE,
