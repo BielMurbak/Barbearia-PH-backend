@@ -36,7 +36,7 @@ public class AgendamentoEntity {
     @Enumerated(EnumType.STRING)
     private StatusAgendamento status;
 
-    //atualizado
+    //atualizados
     private String observacoes; // Para salvar serviços completos (principal + adicionais)
     
     private Double preco; // Para salvar preço total calculado
