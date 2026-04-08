@@ -56,11 +56,11 @@ public class AgendamentoService {
             }
         }
 
-        atualizarStatus(agendamento); // <-- Aqui atualiza o status automaticamente
-        return agendamentoRepository.save(agendamento);
+        atualizarStatus(agendamento);
+        AgendamentoEntity salvo = agendamentoRepository.save(agendamento);
+        // Retorna com todos os detalhes
+        return agendamentoRepository.findByIdWithDetails(salvo.getId()).orElse(salvo);
     }
-
-
 
     public List<AgendamentoEntity> findAll() {
         return agendamentoRepository.findAll();
@@ -89,20 +89,29 @@ public class AgendamentoService {
         return agendamentoRepository.findAgendamentosPorPeriodo(dataInicio, dataFim);
     }
 
+    @Transactional
     public AgendamentoEntity update(Long id, AgendamentoEntity agendamentoEntity){
         AgendamentoEntity agendamento = findById(id);
         agendamento.setData(agendamentoEntity.getData());
         agendamento.setHorario(agendamentoEntity.getHorario());
         agendamento.setLocal(agendamentoEntity.getLocal());
+
+        // Atualiza campos opcionais
+        if (agendamentoEntity.getObservacoes() != null) {
+            agendamento.setObservacoes(agendamentoEntity.getObservacoes());
+        }
+        if (agendamentoEntity.getPreco() != null) {
+            agendamento.setPreco(agendamentoEntity.getPreco());
+        }
         
-        // Buscar cliente completo do banco ao invés de usar o incompleto do request
+        // Busca cliente completo
         if (agendamentoEntity.getClienteEntity() != null && agendamentoEntity.getClienteEntity().getId() != null) {
             ClienteEntity cliente = clienteRepository.findById(agendamentoEntity.getClienteEntity().getId())
                     .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
             agendamento.setClienteEntity(cliente);
         }
         
-        // Buscar profissionalServico completo do banco
+        // Busca profissionalServico completo
         if (agendamentoEntity.getProfissionalServicoEntity() != null && agendamentoEntity.getProfissionalServicoEntity().getId() != null) {
             ProfissionalServicoEntity profServ = profissionalServicoRepository.findById(agendamentoEntity.getProfissionalServicoEntity().getId())
                     .orElseThrow(() -> new RuntimeException("ProfissionalServico não encontrado"));
@@ -110,7 +119,9 @@ public class AgendamentoService {
         }
 
         atualizarStatus(agendamento);
-        return agendamentoRepository.save(agendamento);
+        AgendamentoEntity salvo = agendamentoRepository.save(agendamento);
+        // Retorna com todos os detalhes (servicoEntity, profissionalEntity, clienteEntity completos)
+        return agendamentoRepository.findByIdWithDetails(salvo.getId()).orElse(salvo);
     }
 
     @Transactional
@@ -125,6 +136,12 @@ public class AgendamentoService {
             if (updates.containsKey("local")) {
                 agendamento.setLocal((String) updates.get("local"));
             }
+            if (updates.containsKey("observacoes")) {
+                agendamento.setObservacoes((String) updates.get("observacoes"));
+            }
+            if (updates.containsKey("preco")) {
+                agendamento.setPreco(Double.valueOf(updates.get("preco").toString()));
+            }
             if (updates.containsKey("clienteId")) {
                 Long clienteId = Long.valueOf(updates.get("clienteId").toString());
                 ClienteEntity cliente = clienteRepository.findById(clienteId)
@@ -138,15 +155,21 @@ public class AgendamentoService {
                 agendamento.setProfissionalServicoEntity(ps);
             }
 
-            // Permitir CANCELADO manualmente
+            // Permite CANCELADO manualmente
             if (updates.containsKey("status")) {
                 String statusStr = updates.get("status").toString();
                 if ("CANCELADO".equalsIgnoreCase(statusStr)) {
                     agendamento.setStatus(AgendamentoEntity.StatusAgendamento.CANCELADO);
+                } else if ("CONCLUIDO".equalsIgnoreCase(statusStr)) {
+                    agendamento.setStatus(AgendamentoEntity.StatusAgendamento.CONCLUIDO);
+                } else if ("PENDENTE".equalsIgnoreCase(statusStr)) {
+                    agendamento.setStatus(AgendamentoEntity.StatusAgendamento.PENDENTE);
                 }
+            } else {
+                // Atualiza automaticamente PENDENTE/CONCLUIDO se não estiver CANCELADO
+                atualizarStatus(agendamento);
             }
 
-            atualizarStatus(agendamento); // Atualiza automaticamente PENDENTE/CONCLUIDO se não estiver CANCELADO
             return agendamentoRepository.save(agendamento);
         });
     }
@@ -156,10 +179,7 @@ public class AgendamentoService {
     }
 
     private void atualizarStatus(AgendamentoEntity agendamento) {
-        // Converte a data e hora do agendamento para LocalDateTime
         LocalDateTime inicio = LocalDateTime.of(agendamento.getData(), LocalTime.parse(agendamento.getHorario()));
-
-        // Se já passou, concluiu, senão pendente
         if (agendamento.getStatus() != AgendamentoEntity.StatusAgendamento.CANCELADO) {
             if (inicio.isBefore(LocalDateTime.now())) {
                 agendamento.setStatus(AgendamentoEntity.StatusAgendamento.CONCLUIDO);
@@ -174,5 +194,4 @@ public class AgendamentoService {
                 .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
         return cliente.getId();
     }
-
 }

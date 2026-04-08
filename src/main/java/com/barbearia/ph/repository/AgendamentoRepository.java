@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,4 +27,13 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             "JOIN FETCH ps.servicoEntity " +
             "JOIN FETCH ps.profissionalEntity")
     List<AgendamentoEntity> findAllWithDetails();
+
+    // Busca agendamento por ID com todos os detalhes (para retorno após update)
+    @Query("SELECT a FROM AgendamentoEntity a " +
+            "JOIN FETCH a.clienteEntity " +
+            "JOIN FETCH a.profissionalServicoEntity ps " +
+            "JOIN FETCH ps.servicoEntity " +
+            "JOIN FETCH ps.profissionalEntity " +
+            "WHERE a.id = :id")
+    Optional<AgendamentoEntity> findByIdWithDetails(@Param("id") Long id);
 }

@@ -28,42 +28,44 @@ public class AgendamentoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody AgendamentoEntity agendamentoEntity, @AuthenticationPrincipal UserDetails user) {
+    public ResponseEntity<?> update(
+            @PathVariable Long id,
+            @RequestBody AgendamentoEntity agendamentoEntity,
+            @AuthenticationPrincipal UserDetails user) {
         try {
-            System.out.println("=== UPDATE DEBUG ===");
-            System.out.println("ID: " + id);
-            System.out.println("User: " + (user != null ? user.getUsername() : "null"));
-            
-            // Permitir atualização sem verificação por enquanto para debug
             AgendamentoEntity resultado = agendamentoService.update(id, agendamentoEntity);
-            System.out.println("Update realizado com sucesso");
             return ResponseEntity.ok(resultado);
-            
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-            System.out.println("Erro no update: " + e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.status(500).body("Erro interno: " + e.getMessage());
         }
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<AgendamentoEntity> patchAgendamento(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
-        return ResponseEntity.of(agendamentoService.patch(id, updates));
+    public ResponseEntity<?> patchAgendamento(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> updates) {
+        return agendamentoService.patch(id, updates)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
-    public ResponseEntity<List<AgendamentoEntity>> findAll(@AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails user) {
+    public ResponseEntity<List<AgendamentoEntity>> findAll(
+            @AuthenticationPrincipal UserDetails user) {
 
         boolean isAdmin = user.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
         if (isAdmin) {
-            // Admin vê todos os agendamentos
             return ResponseEntity.ok(agendamentoService.findAllWithDetails());
         } else {
-            // Cliente vê apenas os próprios agendamentos
             Long clienteId = agendamentoService.getClienteIdByCelular(user.getUsername());
-            return ResponseEntity.ok(agendamentoService.findByCliente(clienteId));
+            return ResponseEntity.ok(agendamentoService.findAllWithDetails()
+                    .stream()
+                    .filter(a -> a.getClienteEntity().getId().equals(clienteId))
+                    .toList());
         }
     }
 
@@ -75,29 +77,26 @@ public class AgendamentoController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@PathVariable Long id, @AuthenticationPrincipal UserDetails user) {
         if (user == null) {
-            // Sem autenticação - permitir por enquanto
             agendamentoService.delete(id);
             return ResponseEntity.ok("Agendamento com ID " + id + " removido com sucesso.");
         }
-        
+
         boolean isAdmin = user.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        
+
         if (isAdmin) {
-            // Admin pode excluir qualquer agendamento
             agendamentoService.delete(id);
         } else {
-            // Cliente pode excluir apenas seus próprios agendamentos
             Long clienteId = agendamentoService.getClienteIdByCelular(user.getUsername());
             AgendamentoEntity agendamento = agendamentoService.findById(id);
-            
+
             if (agendamento.getClienteEntity().getId().equals(clienteId)) {
                 agendamentoService.delete(id);
             } else {
                 return ResponseEntity.status(403).body("Você só pode excluir seus próprios agendamentos.");
             }
         }
-        
+
         return ResponseEntity.ok("Agendamento com ID " + id + " removido com sucesso.");
     }
 
@@ -115,7 +114,9 @@ public class AgendamentoController {
 
     @GetMapping("/periodo")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<AgendamentoEntity>> findByPeriodo(@RequestParam String dataInicio, @RequestParam String dataFim) {
+    public ResponseEntity<List<AgendamentoEntity>> findByPeriodo(
+            @RequestParam String dataInicio,
+            @RequestParam String dataFim) {
         LocalDate inicio = LocalDate.parse(dataInicio);
         LocalDate fim = LocalDate.parse(dataFim);
         return ResponseEntity.ok(agendamentoService.findByPeriodo(inicio, fim));
