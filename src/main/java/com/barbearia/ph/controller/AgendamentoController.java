@@ -42,10 +42,40 @@ public class AgendamentoController {
         }
     }
 
+    /**
+     * PATCH: atualização parcial — inclui cancelamento pelo cliente (status=CANCELADO).
+     * Clientes só podem cancelar seus próprios agendamentos.
+     * Admins podem alterar qualquer agendamento.
+     */
     @PatchMapping("/{id}")
     public ResponseEntity<?> patchAgendamento(
             @PathVariable Long id,
-            @RequestBody Map<String, Object> updates) {
+            @RequestBody Map<String, Object> updates,
+            @AuthenticationPrincipal UserDetails user) {
+
+        // Verifica se é uma tentativa de cancelamento por cliente
+        boolean isCancelamento = updates.containsKey("status")
+                && "CANCELADO".equalsIgnoreCase(updates.get("status").toString());
+
+        if (isCancelamento && user != null) {
+            boolean isAdmin = user.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+            if (!isAdmin) {
+                // Cliente só pode cancelar o próprio agendamento
+                try {
+                    Long clienteId = agendamentoService.getClienteIdByCelular(user.getUsername());
+                    AgendamentoEntity ag = agendamentoService.findById(id);
+                    if (!ag.getClienteEntity().getId().equals(clienteId)) {
+                        return ResponseEntity.status(403)
+                                .body("Você só pode cancelar seus próprios agendamentos.");
+                    }
+                } catch (Exception e) {
+                    return ResponseEntity.status(403).body("Acesso negado.");
+                }
+            }
+        }
+
         return agendamentoService.patch(id, updates)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -74,29 +104,11 @@ public class AgendamentoController {
         return ResponseEntity.ok(agendamentoService.findById(id));
     }
 
+    // DELETE restrito a ADMIN — para exclusão definitiva quando necessário
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable Long id, @AuthenticationPrincipal UserDetails user) {
-        if (user == null) {
-            agendamentoService.delete(id);
-            return ResponseEntity.ok("Agendamento com ID " + id + " removido com sucesso.");
-        }
-
-        boolean isAdmin = user.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-
-        if (isAdmin) {
-            agendamentoService.delete(id);
-        } else {
-            Long clienteId = agendamentoService.getClienteIdByCelular(user.getUsername());
-            AgendamentoEntity agendamento = agendamentoService.findById(id);
-
-            if (agendamento.getClienteEntity().getId().equals(clienteId)) {
-                agendamentoService.delete(id);
-            } else {
-                return ResponseEntity.status(403).body("Você só pode excluir seus próprios agendamentos.");
-            }
-        }
-
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> delete(@PathVariable Long id) {
+        agendamentoService.delete(id);
         return ResponseEntity.ok("Agendamento com ID " + id + " removido com sucesso.");
     }
 

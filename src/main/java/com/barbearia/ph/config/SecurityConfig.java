@@ -46,21 +46,26 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(requests -> requests
-                        // Rotas públicas de API
+                        // Rotas públicas
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/clientes").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/profissionais").permitAll()
                         .requestMatchers("/api/servicos/**").permitAll()
                         .requestMatchers("/api/profissionais/servicos/**").permitAll()
-                        .requestMatchers("/api/agendamentos/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/clientes/**").permitAll()
+
+                        // Agendamentos: GET e POST liberados; PATCH e PUT exigem autenticação
+                        .requestMatchers(HttpMethod.GET, "/api/agendamentos/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/agendamentos").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/agendamentos/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/agendamentos/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/agendamentos/**").hasRole("ADMIN")
 
                         // Rotas protegidas
                         .requestMatchers("/api/profissionais/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/clientes/**").hasAnyRole("ADMIN", "CLIENTE")
                         .requestMatchers(HttpMethod.DELETE, "/api/clientes/**").hasRole("ADMIN")
 
-                        // Qualquer outro endpoint precisa de autenticação
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
@@ -95,10 +100,12 @@ public class SecurityConfig {
                 HttpHeaders.CONTENT_TYPE,
                 HttpHeaders.ACCEPT
         ));
+        // PATCH adicionado — necessário para cancelamento e atualização parcial
         config.setAllowedMethods(Arrays.asList(
                 HttpMethod.GET.name(),
                 HttpMethod.POST.name(),
                 HttpMethod.PUT.name(),
+                HttpMethod.PATCH.name(),
                 HttpMethod.DELETE.name()
         ));
         config.setMaxAge(3600L);
