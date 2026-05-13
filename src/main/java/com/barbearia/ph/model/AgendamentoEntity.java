@@ -53,7 +53,7 @@ public class AgendamentoEntity {
     private ClienteEntity clienteEntity;
 
     @ManyToOne
-    @JoinColumn(name = "profissionalServico_id", nullable = false)
+    @JoinColumn(name = "profissional_servico_id", nullable = false)
     @NotNull(message = "O profissional e serviço são obrigatórios")
     private ProfissionalServicoEntity profissionalServicoEntity;
 }

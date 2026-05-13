@@ -9,6 +9,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -52,17 +55,22 @@ public class AgendamentoController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AgendamentoEntity>> findAll(@AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails user) {
+    public ResponseEntity<List<AgendamentoEntity>> findAll(Authentication authentication) {
 
-        boolean isAdmin = user.getAuthorities().stream()
+        if (authentication == null) {
+            return ResponseEntity.status(401).body(null);
+        }
+
+        boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
         if (isAdmin) {
-            // Admin vê todos os agendamentos
             return ResponseEntity.ok(agendamentoService.findAllWithDetails());
         } else {
-            // Cliente vê apenas os próprios agendamentos
-            Long clienteId = agendamentoService.getClienteIdByCelular(user.getUsername());
+            // Extrai o celular do token JWT do Keycloak
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            String celular = jwt.getClaimAsString("preferred_username");
+            Long clienteId = agendamentoService.getClienteIdByCelular(celular);
             return ResponseEntity.ok(agendamentoService.findByCliente(clienteId));
         }
     }
