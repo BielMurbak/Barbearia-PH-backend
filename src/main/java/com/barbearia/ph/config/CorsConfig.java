@@ -16,6 +16,7 @@ public class CorsConfig {
         configuration.addAllowedOrigin("https://phbarbearia.com.br");
         // Adicionar o IP da VM do frontend
         configuration.addAllowedOrigin("http://10.35.238.2:4200");
+        configuration.addAllowedOrigin("http://10.35.238.2");
         // Manter localhost para desenvolvimento local (opcional)
         configuration.addAllowedOrigin("http://localhost:4200");
         
