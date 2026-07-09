@@ -17,15 +17,17 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String celular) throws UsernameNotFoundException {
 
-        // Primeiro tenta cliente
-        var clientes = clienteService.findByCelular(celular);
-        if (!clientes.isEmpty()) return clientes.get(0); // ClienteEntity implementa UserDetails
-
-        // Depois tenta profissional/admin
+        // primeiro tenta barbeiro
         var profOpt = profissionalRepository.findByCelular(celular);
         if (profOpt.isPresent()) {
             return profOpt.get(); // ProfissionalEntity implementa UserDetails
         }
+
+        // depois cliente
+        var clientes = clienteService.findByCelular(celular);
+        if (!clientes.isEmpty()) return clientes.get(0); // ClienteEntity implementa UserDetails
+
+
 
         throw new UsernameNotFoundException("Usuário não encontrado com celular: " + celular);
     }
