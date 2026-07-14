@@ -1,5 +1,8 @@
 package com.barbearia.ph.controller;
 
+import com.barbearia.ph.dto.DtoMapper;
+import com.barbearia.ph.dto.ServicoRequestDTO;
+import com.barbearia.ph.dto.ServicoResponseDTO;
 import com.barbearia.ph.model.ServicoEntity;
 import com.barbearia.ph.service.ServicoService;
 import jakarta.validation.Valid;
@@ -19,75 +22,53 @@ public class ServicoController {
     private final ServicoService servicoService;
 
     @PostMapping
-    public ResponseEntity<?> save(@Valid @RequestBody ServicoEntity servicoEntity) {
-        try {
-            ServicoEntity salvo = servicoService.save(servicoEntity);
-            return new ResponseEntity<>(salvo, HttpStatus.CREATED);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao salvar serviço: " + ex.getMessage());
-        }
+    public ResponseEntity<ServicoResponseDTO> save(@Valid @RequestBody ServicoRequestDTO dto) {
+        ServicoEntity salvo = servicoService.save(DtoMapper.toEntity(dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(DtoMapper.toResponse(salvo));
     }
 
     @GetMapping
-    public ResponseEntity<?> findAll() {
-        try {
-            List<ServicoEntity> servicos = servicoService.findAll();
-            return ResponseEntity.ok(servicos);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao listar serviços: " + ex.getMessage());
-        }
+    public ResponseEntity<List<ServicoResponseDTO>> findAll() {
+        List<ServicoResponseDTO> servicos = servicoService.findAll().stream()
+                .map(DtoMapper::toResponse).toList();
+        return ResponseEntity.ok(servicos);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> findById(@PathVariable Long id) {
-        try {
-            ServicoEntity servico = servicoService.findById(id);
-            return ResponseEntity.ok(servico);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao buscar serviço: " + ex.getMessage());
-        }
+    public ResponseEntity<ServicoResponseDTO> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(DtoMapper.toResponse(servicoService.findById(id)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody ServicoEntity servicoEntity) {
-        try {
-            ServicoEntity atualizado = servicoService.update(id, servicoEntity);
-            return ResponseEntity.ok(atualizado);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao atualizar serviço: " + ex.getMessage());
-        }
+    public ResponseEntity<ServicoResponseDTO> update(@PathVariable Long id, @Valid @RequestBody ServicoRequestDTO dto) {
+        ServicoEntity atualizado = servicoService.update(id, DtoMapper.toEntity(dto));
+        return ResponseEntity.ok(DtoMapper.toResponse(atualizado));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
-        try {
-            servicoService.delete(id);
-            return ResponseEntity.noContent().build();
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao deletar serviço: " + ex.getMessage());
-        }
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        servicoService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/descricao")
-    public ResponseEntity<List<ServicoEntity>> findByDescricao(@RequestParam String descricao) {
-        List<ServicoEntity> servicos = servicoService.findByDescricao(descricao);
+    public ResponseEntity<List<ServicoResponseDTO>> findByDescricao(@RequestParam String descricao) {
+        List<ServicoResponseDTO> servicos = servicoService.findByDescricao(descricao).stream()
+                .map(DtoMapper::toResponse).toList();
         return ResponseEntity.ok(servicos);
     }
 
     @GetMapping("/duracao-maxima")
-    public ResponseEntity<List<ServicoEntity>> findByDuracaoMaxima(@RequestParam int duracao) {
-        List<ServicoEntity> servicos = servicoService.findByDuracaoMaxima(duracao);
+    public ResponseEntity<List<ServicoResponseDTO>> findByDuracaoMaxima(@RequestParam int duracao) {
+        List<ServicoResponseDTO> servicos = servicoService.findByDuracaoMaxima(duracao).stream()
+                .map(DtoMapper::toResponse).toList();
         return ResponseEntity.ok(servicos);
     }
 
     @GetMapping("/duracao-range")
-    public ResponseEntity<List<ServicoEntity>> findByDuracaoRange(@RequestParam int duracaoMin, @RequestParam int duracaoMax) {
-        List<ServicoEntity> servicos = servicoService.findByDuracaoRange(duracaoMin, duracaoMax);
+    public ResponseEntity<List<ServicoResponseDTO>> findByDuracaoRange(@RequestParam int duracaoMin, @RequestParam int duracaoMax) {
+        List<ServicoResponseDTO> servicos = servicoService.findByDuracaoRange(duracaoMin, duracaoMax).stream()
+                .map(DtoMapper::toResponse).toList();
         return ResponseEntity.ok(servicos);
     }
 }

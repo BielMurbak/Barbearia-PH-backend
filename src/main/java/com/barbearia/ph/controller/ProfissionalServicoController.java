@@ -1,7 +1,11 @@
 package com.barbearia.ph.controller;
 
+import com.barbearia.ph.dto.DtoMapper;
+import com.barbearia.ph.dto.ProfissionalServicoRequestDTO;
+import com.barbearia.ph.dto.ProfissionalServicoResponseDTO;
 import com.barbearia.ph.model.ProfissionalServicoEntity;
 import com.barbearia.ph.service.ProfissionalServicoService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,42 +21,35 @@ public class ProfissionalServicoController {
 
     private final ProfissionalServicoService profissionalServicoService;
 
-    // CREATE
     @PostMapping
-    public ResponseEntity<ProfissionalServicoEntity> save(@RequestBody ProfissionalServicoEntity profissionalServicoEntity) {
-        ProfissionalServicoEntity salvo = profissionalServicoService.save(profissionalServicoEntity);
-        return new ResponseEntity<>(salvo, HttpStatus.CREATED);
+    public ResponseEntity<ProfissionalServicoResponseDTO> save(@Valid @RequestBody ProfissionalServicoRequestDTO dto) {
+        ProfissionalServicoEntity salvo = profissionalServicoService.save(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(DtoMapper.toResponse(salvo));
     }
 
-    // UPDATE
     @PutMapping("/{id}")
-    public ResponseEntity<ProfissionalServicoEntity> update(
+    public ResponseEntity<ProfissionalServicoResponseDTO> update(
             @PathVariable Long id,
-            @RequestBody ProfissionalServicoEntity profissionalServicoEntity
-    ) {
-        profissionalServicoEntity.setId(id);
-        ProfissionalServicoEntity updated = profissionalServicoService.update(profissionalServicoEntity);
-        return ResponseEntity.ok(updated);
+            @Valid @RequestBody ProfissionalServicoRequestDTO dto) {
+        ProfissionalServicoEntity updated = profissionalServicoService.update(id, dto);
+        return ResponseEntity.ok(DtoMapper.toResponse(updated));
     }
 
-    // DELETE
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         profissionalServicoService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
-    // FIND ALL
     @GetMapping
-    public ResponseEntity<List<ProfissionalServicoEntity>> findAll() {
-        List<ProfissionalServicoEntity> list = profissionalServicoService.findAll();
+    public ResponseEntity<List<ProfissionalServicoResponseDTO>> findAll() {
+        List<ProfissionalServicoResponseDTO> list = profissionalServicoService.findAll().stream()
+                .map(DtoMapper::toResponse).toList();
         return ResponseEntity.ok(list);
     }
 
-    // FIND BY ID
     @GetMapping("/{id}")
-    public ResponseEntity<ProfissionalServicoEntity> findById(@PathVariable Long id) {
-        ProfissionalServicoEntity entity = profissionalServicoService.findById(id);
-        return ResponseEntity.ok(entity);
+    public ResponseEntity<ProfissionalServicoResponseDTO> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(DtoMapper.toResponse(profissionalServicoService.findById(id)));
     }
 }

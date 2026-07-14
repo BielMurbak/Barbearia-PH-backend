@@ -4,6 +4,7 @@ package com.barbearia.ph.service;
 import com.barbearia.ph.model.ProfissionalEntity;
 import com.barbearia.ph.repository.ProfissionalRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,10 +14,12 @@ import java.util.List;
 public class ProfissionalService {
 
     private final ProfissionalRepository profissionalRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public ProfissionalEntity save(ProfissionalEntity profissionalEntity){
-
-
+    public ProfissionalEntity save(ProfissionalEntity profissionalEntity) {
+        if (profissionalEntity.getSenha() != null && !profissionalEntity.getSenha().isBlank()) {
+            profissionalEntity.setSenha(passwordEncoder.encode(profissionalEntity.getSenha()));
+        }
         return profissionalRepository.save(profissionalEntity);
     }
 

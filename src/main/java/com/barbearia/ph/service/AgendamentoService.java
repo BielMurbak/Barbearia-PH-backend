@@ -1,5 +1,6 @@
 package com.barbearia.ph.service;
 
+import com.barbearia.ph.dto.AgendamentoRequestDTO;
 import com.barbearia.ph.model.AgendamentoEntity;
 import com.barbearia.ph.model.ClienteEntity;
 import com.barbearia.ph.model.ProfissionalServicoEntity;
@@ -26,13 +27,19 @@ public class AgendamentoService {
     private final ProfissionalServicoRepository profissionalServicoRepository;
     private final ClienteService clienteService;
 
-    public AgendamentoEntity save(AgendamentoEntity agendamento) {
-        ClienteEntity cliente = clienteRepository.findById(agendamento.getClienteEntity().getId())
+    public AgendamentoEntity save(AgendamentoRequestDTO dto) {
+        ClienteEntity cliente = clienteRepository.findById(dto.getClienteId())
                 .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
 
-        ProfissionalServicoEntity profServ = profissionalServicoRepository.findById(agendamento.getProfissionalServicoEntity().getId())
+        ProfissionalServicoEntity profServ = profissionalServicoRepository.findById(dto.getProfissionalServicoId())
                 .orElseThrow(() -> new RuntimeException("ProfissionalServico não encontrado"));
 
+        AgendamentoEntity agendamento = new AgendamentoEntity();
+        agendamento.setData(dto.getData());
+        agendamento.setLocal(dto.getLocal());
+        agendamento.setHorario(dto.getHorario());
+        agendamento.setObservacoes(dto.getObservacoes());
+        agendamento.setPreco(dto.getPreco());
         agendamento.setClienteEntity(cliente);
         agendamento.setProfissionalServicoEntity(profServ);
 
@@ -90,37 +97,29 @@ public class AgendamentoService {
     }
 
     @Transactional
-    public AgendamentoEntity update(Long id, AgendamentoEntity agendamentoEntity){
+    public AgendamentoEntity update(Long id, AgendamentoRequestDTO dto) {
         AgendamentoEntity agendamento = findById(id);
-        agendamento.setData(agendamentoEntity.getData());
-        agendamento.setHorario(agendamentoEntity.getHorario());
-        agendamento.setLocal(agendamentoEntity.getLocal());
+        agendamento.setData(dto.getData());
+        agendamento.setHorario(dto.getHorario());
+        agendamento.setLocal(dto.getLocal());
 
-        // Atualiza campos opcionais
-        if (agendamentoEntity.getObservacoes() != null) {
-            agendamento.setObservacoes(agendamentoEntity.getObservacoes());
-        }
-        if (agendamentoEntity.getPreco() != null) {
-            agendamento.setPreco(agendamentoEntity.getPreco());
-        }
-        
-        // Busca cliente completo
-        if (agendamentoEntity.getClienteEntity() != null && agendamentoEntity.getClienteEntity().getId() != null) {
-            ClienteEntity cliente = clienteRepository.findById(agendamentoEntity.getClienteEntity().getId())
+        if (dto.getObservacoes() != null) agendamento.setObservacoes(dto.getObservacoes());
+        if (dto.getPreco() != null) agendamento.setPreco(dto.getPreco());
+
+        if (dto.getClienteId() != null) {
+            ClienteEntity cliente = clienteRepository.findById(dto.getClienteId())
                     .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
             agendamento.setClienteEntity(cliente);
         }
-        
-        // Busca profissionalServico completo
-        if (agendamentoEntity.getProfissionalServicoEntity() != null && agendamentoEntity.getProfissionalServicoEntity().getId() != null) {
-            ProfissionalServicoEntity profServ = profissionalServicoRepository.findById(agendamentoEntity.getProfissionalServicoEntity().getId())
+
+        if (dto.getProfissionalServicoId() != null) {
+            ProfissionalServicoEntity profServ = profissionalServicoRepository.findById(dto.getProfissionalServicoId())
                     .orElseThrow(() -> new RuntimeException("ProfissionalServico não encontrado"));
             agendamento.setProfissionalServicoEntity(profServ);
         }
 
         atualizarStatus(agendamento);
         AgendamentoEntity salvo = agendamentoRepository.save(agendamento);
-        // Retorna com todos os detalhes (servicoEntity, profissionalEntity, clienteEntity completos)
         return agendamentoRepository.findByIdWithDetails(salvo.getId()).orElse(salvo);
     }
 

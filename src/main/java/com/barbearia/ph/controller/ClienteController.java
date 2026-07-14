@@ -1,5 +1,8 @@
 package com.barbearia.ph.controller;
 
+import com.barbearia.ph.dto.ClienteRequestDTO;
+import com.barbearia.ph.dto.ClienteResponseDTO;
+import com.barbearia.ph.dto.DtoMapper;
 import com.barbearia.ph.model.ClienteEntity;
 import com.barbearia.ph.service.ClienteService;
 import jakarta.validation.Valid;
@@ -19,90 +22,53 @@ public class ClienteController {
     private final ClienteService clienteService;
 
     @PostMapping
-    public ResponseEntity<?> save(@Valid @RequestBody ClienteEntity clienteEntity) {
-        try {
-            ClienteEntity salvo = clienteService.save(clienteEntity);
-            return ResponseEntity.ok(salvo);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao salvar cliente: " + ex.getMessage());
-        }
+    public ResponseEntity<ClienteResponseDTO> save(@Valid @RequestBody ClienteRequestDTO dto) {
+        ClienteEntity salvo = clienteService.save(DtoMapper.toEntity(dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(DtoMapper.toResponse(salvo));
     }
 
     @GetMapping
-    public ResponseEntity<?> findAll() {
-        try {
-            List<ClienteEntity> clientes = clienteService.findAll();
-            return ResponseEntity.ok(clientes);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao listar clientes: " + ex.getMessage());
-        }
+    public ResponseEntity<List<ClienteResponseDTO>> findAll() {
+        List<ClienteResponseDTO> clientes = clienteService.findAll().stream()
+                .map(DtoMapper::toResponse).toList();
+        return ResponseEntity.ok(clientes);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> findById(@PathVariable Long id) {
-        try {
-            ClienteEntity cliente = clienteService.findById(id);
-            return ResponseEntity.ok(cliente);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao buscar cliente: " + ex.getMessage());
-        }
+    public ResponseEntity<ClienteResponseDTO> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(DtoMapper.toResponse(clienteService.findById(id)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody ClienteEntity clienteEntity) {
-        try {
-            ClienteEntity atualizado = clienteService.update(id, clienteEntity);
-            return ResponseEntity.ok(atualizado);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao atualizar cliente: " + ex.getMessage());
-        }
+    public ResponseEntity<ClienteResponseDTO> update(@PathVariable Long id, @Valid @RequestBody ClienteRequestDTO dto) {
+        ClienteEntity atualizado = clienteService.update(id, DtoMapper.toEntity(dto));
+        return ResponseEntity.ok(DtoMapper.toResponse(atualizado));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
-        try {
-            clienteService.delete(id);
-            return ResponseEntity.ok("Cliente com ID " + id + " removido com sucesso.");
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao deletar cliente: " + ex.getMessage());
-        }
+    public ResponseEntity<String> delete(@PathVariable Long id) {
+        clienteService.delete(id);
+        return ResponseEntity.ok("Cliente com ID " + id + " removido com sucesso.");
     }
 
     @GetMapping("/nome")
-    public ResponseEntity<?> findByNome(@RequestParam String nome) {
-        try {
-            List<ClienteEntity> clientes = clienteService.findByNome(nome);
-            return ResponseEntity.ok(clientes);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao buscar por nome: " + ex.getMessage());
-        }
+    public ResponseEntity<List<ClienteResponseDTO>> findByNome(@RequestParam String nome) {
+        List<ClienteResponseDTO> clientes = clienteService.findByNome(nome).stream()
+                .map(DtoMapper::toResponse).toList();
+        return ResponseEntity.ok(clientes);
     }
 
     @GetMapping("/celular")
-    public ResponseEntity<?> findByCelular(@RequestParam String celular) {
-        try {
-            List<ClienteEntity> clientes = clienteService.findByCelular(celular);
-            return ResponseEntity.ok(clientes);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao buscar por celular: " + ex.getMessage());
-        }
+    public ResponseEntity<List<ClienteResponseDTO>> findByCelular(@RequestParam String celular) {
+        List<ClienteResponseDTO> clientes = clienteService.findByCelular(celular).stream()
+                .map(DtoMapper::toResponse).toList();
+        return ResponseEntity.ok(clientes);
     }
 
     @GetMapping("/nome-completo")
-    public ResponseEntity<?> findByNomeCompleto(@RequestParam String nomeCompleto) {
-        try {
-            List<ClienteEntity> clientes = clienteService.findByNomeCompleto(nomeCompleto);
-            return ResponseEntity.ok(clientes);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao buscar por nome completo: " + ex.getMessage());
-        }
+    public ResponseEntity<List<ClienteResponseDTO>> findByNomeCompleto(@RequestParam String nomeCompleto) {
+        List<ClienteResponseDTO> clientes = clienteService.findByNomeCompleto(nomeCompleto).stream()
+                .map(DtoMapper::toResponse).toList();
+        return ResponseEntity.ok(clientes);
     }
 }
