@@ -50,16 +50,26 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/clientes").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/profissionais").permitAll()
-                        .requestMatchers("/api/servicos/**").permitAll()
-                        .requestMatchers("/api/profissionais/servicos/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/clientes/**").permitAll()
 
-                        // Agendamentos: GET e POST liberados; PATCH e PUT exigem autenticação
+                        // Serviços e ProfissionalServico: leitura é pública (o cliente precisa
+                        // ver preço/serviço sem estar logado pra montar o agendamento).
+                        // Escrita (criar/editar/apagar) passa a exigir ADMIN — antes estava tudo aberto.
+                        .requestMatchers(HttpMethod.GET, "/api/servicos/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/servicos/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/servicos/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/servicos/**").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.GET, "/api/profissionais/servicos/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/profissionais/servicos/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/profissionais/servicos/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/profissionais/servicos/**").hasRole("ADMIN")
+
                         .requestMatchers(HttpMethod.GET, "/api/agendamentos/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/agendamentos").permitAll()
-                        .requestMatchers(HttpMethod.PATCH, "/api/agendamentos/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/agendamentos/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/agendamentos/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/agendamentos/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/agendamentos/**").authenticated()
 
                         // Rotas protegidas
                         .requestMatchers("/api/profissionais/**").hasRole("ADMIN")

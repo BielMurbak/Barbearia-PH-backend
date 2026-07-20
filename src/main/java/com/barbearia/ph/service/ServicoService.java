@@ -1,7 +1,9 @@
 package com.barbearia.ph.service;
 
 
+import com.barbearia.ph.model.ProfissionalServicoEntity;
 import com.barbearia.ph.model.ServicoEntity;
+import com.barbearia.ph.repository.ProfissionalServicoRepository;
 import com.barbearia.ph.repository.ServicoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,13 +14,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ServicoService {
     private final ServicoRepository servicoRepository;
+    private final ProfissionalServicoRepository profissionalServicoRepository;
 
     public ServicoEntity save(ServicoEntity servicoEntity) {
         return servicoRepository.save(servicoEntity);
     }
 
     public List<ServicoEntity> findAll(){
-        return servicoRepository.findAll();
+        return servicoRepository.findByAtivoTrue();
     }
 
     public ServicoEntity findById(Long id){
@@ -32,9 +35,18 @@ public class ServicoService {
         return servicoRepository.save(servico);
     }
 
+    // Soft delete: agendamentos antigos referenciam o serviço (direto e via
+    // ProfissionalServicoEntity) por chave estrangeira, então excluir de verdade
+    // quebraria o histórico. Só marca como inativo — some do catálogo, mas a
+    // linha continua existindo pros agendamentos já feitos.
     public void delete(Long id){
-        findById(id);
-        servicoRepository.deleteById(id);
+        ServicoEntity servico = findById(id);
+        servico.setAtivo(false);
+        servicoRepository.save(servico);
+
+        List<ProfissionalServicoEntity> vinculos = profissionalServicoRepository.findByServicoEntity(servico);
+        vinculos.forEach(ps -> ps.setAtivo(false));
+        profissionalServicoRepository.saveAll(vinculos);
     }
     
     public List<ServicoEntity> findByDescricao(String descricao){

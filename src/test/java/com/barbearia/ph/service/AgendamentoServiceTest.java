@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -124,6 +125,30 @@ class AgendamentoServiceTest {
     }
 
     @Test
+    @DisplayName("Deve continuar PENDENTE dentro da 1h de carência após o horário marcado")
+    void deveContinuarPendenteDentroDaCarenciaDeUmaHora() {
+        LocalDateTime agora = LocalDateTime.now();
+        AgendamentoEntity agendamentoRecente = new AgendamentoEntity();
+        agendamentoRecente.setId(1L);
+        agendamentoRecente.setData(agora.toLocalDate());
+        // 30 minutos atrás — dentro da carência de 1h
+        agendamentoRecente.setHorario(agora.minusMinutes(30).toLocalTime().withSecond(0).withNano(0).toString().substring(0, 5));
+        agendamentoRecente.setLocal("Barbearia PH");
+        agendamentoRecente.setClienteEntity(cliente);
+        agendamentoRecente.setProfissionalServicoEntity(profServ);
+
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(profissionalServicoRepository.findById(1L)).thenReturn(Optional.of(profServ));
+        when(agendamentoRepository.findByDataAndProfissionalServicoEntity_ProfissionalEntity_Id(
+                any(), anyLong())).thenReturn(List.of());
+        when(agendamentoRepository.save(any())).thenReturn(agendamentoRecente);
+
+        AgendamentoEntity salvo = agendamentoService.save(agendamentoRecente);
+
+        assertEquals(AgendamentoEntity.StatusAgendamento.PENDENTE, salvo.getStatus());
+    }
+
+    @Test
     @DisplayName("Deve lançar exceção quando cliente não existir no save")
     void deveLancarExcecaoQuandoClienteNaoExisteNoSave() {
         when(clienteRepository.findById(1L)).thenReturn(Optional.empty());
@@ -159,6 +184,29 @@ class AgendamentoServiceTest {
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> agendamentoService.save(agendamento));
         assertTrue(ex.getMessage().contains("Horário indisponível"));
+    }
+
+    @Test
+    @DisplayName("Deve salvar novo agendamento (de outro cliente) no mesmo horário de um CANCELADO")
+    void deveSalvarQuandoExistenteEstaCancelado() {
+        AgendamentoEntity cancelado = new AgendamentoEntity();
+        cancelado.setId(2L);
+        cancelado.setData(agendamento.getData());
+        cancelado.setHorario("10:00"); // MESMO horário do novo agendamento
+        cancelado.setStatus(AgendamentoEntity.StatusAgendamento.CANCELADO);
+        cancelado.setClienteEntity(cliente);
+        cancelado.setProfissionalServicoEntity(profServ);
+
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(profissionalServicoRepository.findById(1L)).thenReturn(Optional.of(profServ));
+        when(agendamentoRepository.findByDataAndProfissionalServicoEntity_ProfissionalEntity_Id(
+                any(), anyLong())).thenReturn(List.of(cancelado));
+        when(agendamentoRepository.save(any())).thenReturn(agendamento);
+
+        AgendamentoEntity salvo = agendamentoService.save(agendamento);
+
+        assertNotNull(salvo);
+        verify(agendamentoRepository, times(1)).save(any());
     }
 
     @Test
@@ -235,6 +283,8 @@ class AgendamentoServiceTest {
     void deveAtualizarAgendamentoComSucesso() {
         when(agendamentoRepository.findById(1L)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(any())).thenReturn(agendamento);
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(profissionalServicoRepository.findById(1L)).thenReturn(Optional.of(profServ));
 
         AgendamentoEntity atualizado = new AgendamentoEntity();
         atualizado.setData(LocalDate.now().plusDays(2));
@@ -246,6 +296,64 @@ class AgendamentoServiceTest {
         AgendamentoEntity resultado = agendamentoService.update(1L, atualizado);
 
         assertEquals("PH Premium", resultado.getLocal());
+        verify(agendamentoRepository, times(1)).save(any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao reagendar para um horário que já conflita com outro agendamento")
+    void deveLancarExcecaoAoAtualizarParaHorarioComConflito() {
+        AgendamentoEntity outroExistente = new AgendamentoEntity();
+        outroExistente.setId(2L);
+        outroExistente.setData(LocalDate.now().plusDays(2));
+        outroExistente.setHorario("15:00");
+        outroExistente.setClienteEntity(cliente);
+        outroExistente.setProfissionalServicoEntity(profServ);
+
+        when(agendamentoRepository.findById(1L)).thenReturn(Optional.of(agendamento));
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(profissionalServicoRepository.findById(1L)).thenReturn(Optional.of(profServ));
+        when(agendamentoRepository.findByDataAndProfissionalServicoEntity_ProfissionalEntity_Id(
+                any(), anyLong())).thenReturn(List.of(outroExistente));
+
+        AgendamentoEntity atualizado = new AgendamentoEntity();
+        atualizado.setData(LocalDate.now().plusDays(2));
+        atualizado.setHorario("15:00"); // mesmo horário do outroExistente
+        atualizado.setLocal("Barbearia PH");
+        atualizado.setClienteEntity(cliente);
+        atualizado.setProfissionalServicoEntity(profServ);
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> agendamentoService.update(1L, atualizado));
+        assertTrue(ex.getMessage().contains("Horário indisponível"));
+        verify(agendamentoRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Não deve conflitar consigo mesmo ao reagendar (mesmo id no mesmo horário)")
+    void naoDeveConflitarComSigoMesmoAoAtualizar() {
+        AgendamentoEntity elesMesmo = new AgendamentoEntity();
+        elesMesmo.setId(1L); // MESMO id do agendamento sendo atualizado
+        elesMesmo.setData(LocalDate.now().plusDays(2));
+        elesMesmo.setHorario("15:00");
+        elesMesmo.setClienteEntity(cliente);
+        elesMesmo.setProfissionalServicoEntity(profServ);
+
+        when(agendamentoRepository.findById(1L)).thenReturn(Optional.of(agendamento));
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(profissionalServicoRepository.findById(1L)).thenReturn(Optional.of(profServ));
+        when(agendamentoRepository.findByDataAndProfissionalServicoEntity_ProfissionalEntity_Id(
+                any(), anyLong())).thenReturn(List.of(elesMesmo));
+        when(agendamentoRepository.save(any())).thenReturn(agendamento);
+
+        AgendamentoEntity atualizado = new AgendamentoEntity();
+        atualizado.setData(LocalDate.now().plusDays(2));
+        atualizado.setHorario("15:00");
+        atualizado.setLocal("Barbearia PH");
+        atualizado.setClienteEntity(cliente);
+        atualizado.setProfissionalServicoEntity(profServ);
+
+        AgendamentoEntity resultado = agendamentoService.update(1L, atualizado);
+
+        assertNotNull(resultado);
         verify(agendamentoRepository, times(1)).save(any());
     }
 

@@ -27,14 +27,20 @@ public class ProfissionalServicoService {
         return profissionalServicoRepository.save(profissionalServicoEntity);
     }
 
-    // DELETE
+    // DELETE (soft delete)
+    // Agendamentos antigos referenciam essa linha por chave estrangeira, então
+    // "excluir" nunca apaga de verdade — só marca como inativo, o que já basta
+    // pra sumir de qualquer listagem/catálogo. O agendamento continua existindo
+    // e mostrando os dados congelados de quando foi feito, sem qualquer mudança.
     public void delete(Long id) {
-        profissionalServicoRepository.deleteById(id);
+        ProfissionalServicoEntity ps = findById(id);
+        ps.setAtivo(false);
+        profissionalServicoRepository.save(ps);
     }
 
-    // FIND ALL
+    // FIND ALL (só os ativos — o que ainda está no catálogo)
     public List<ProfissionalServicoEntity> findAll() {
-        return profissionalServicoRepository.findAll();
+        return profissionalServicoRepository.findByAtivoTrue();
     }
 
     // FIND BY ID

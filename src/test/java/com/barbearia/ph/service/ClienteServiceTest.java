@@ -2,6 +2,7 @@ package com.barbearia.ph.service;
 
 import com.barbearia.ph.model.ClienteEntity;
 import com.barbearia.ph.repository.ClienteRepository;
+import com.barbearia.ph.repository.ProfissionalRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +23,12 @@ class ClienteServiceTest {
 
     @Mock
     private ClienteRepository clienteRepository;
+
+    @Mock
+    private ProfissionalRepository profissionalRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private ClienteService clienteService;
@@ -111,6 +119,8 @@ class ClienteServiceTest {
         novo.setCelular("44 98888-9999");
 
         when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(clienteRepository.findByCelular("44 98888-9999")).thenReturn(Optional.empty());
+        when(profissionalRepository.findByCelular("44 98888-9999")).thenReturn(Optional.empty());
         when(clienteRepository.save(any(ClienteEntity.class))).thenReturn(cliente);
 
         ClienteEntity atualizado = clienteService.update(1L, novo);
@@ -121,6 +131,90 @@ class ClienteServiceTest {
         assertEquals("44 98888-9999", atualizado.getCelular());
         verify(clienteRepository).findById(1L);
         verify(clienteRepository).save(cliente);
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao atualizar celular já usado por outro cliente")
+    void deveLancarExcecaoAoAtualizarCelularJaUsadoPorOutroCliente() {
+        ClienteEntity novo = new ClienteEntity();
+        novo.setNome("João");
+        novo.setSobrenome("Silva");
+        novo.setCelular("44 98888-9999");
+
+        ClienteEntity outro = new ClienteEntity();
+        outro.setId(2L);
+        outro.setCelular("44 98888-9999");
+
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(clienteRepository.findByCelular("44 98888-9999")).thenReturn(Optional.of(outro));
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> clienteService.update(1L, novo));
+
+        assertEquals("Este número já está cadastrado.", ex.getMessage());
+        verify(clienteRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao atualizar celular já usado por um profissional")
+    void deveLancarExcecaoAoAtualizarCelularJaUsadoPorProfissional() {
+        ClienteEntity novo = new ClienteEntity();
+        novo.setNome("João");
+        novo.setSobrenome("Silva");
+        novo.setCelular("44 98888-9999");
+
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(clienteRepository.findByCelular("44 98888-9999")).thenReturn(Optional.empty());
+        when(profissionalRepository.findByCelular("44 98888-9999"))
+                .thenReturn(Optional.of(new com.barbearia.ph.model.ProfissionalEntity()));
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> clienteService.update(1L, novo));
+
+        assertEquals("Este número já está cadastrado.", ex.getMessage());
+        verify(clienteRepository, never()).save(any());
+    }
+
+    // ---------- TESTES ALTERAR SENHA ----------
+
+    @Test
+    @DisplayName("Deve alterar senha quando a senha atual estiver correta")
+    void deveAlterarSenhaComSucesso() {
+        cliente.setSenha("hashAntigo");
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(passwordEncoder.matches("senhaAntiga", "hashAntigo")).thenReturn(true);
+        when(passwordEncoder.encode("senhaNova")).thenReturn("hashNovo");
+
+        clienteService.alterarSenha(1L, "senhaAntiga", "senhaNova");
+
+        assertEquals("hashNovo", cliente.getSenha());
+        verify(clienteRepository).save(cliente);
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao alterar senha com senha atual incorreta")
+    void deveLancarExcecaoAoAlterarSenhaComSenhaAtualIncorreta() {
+        cliente.setSenha("hashAntigo");
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(passwordEncoder.matches("senhaErrada", "hashAntigo")).thenReturn(false);
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> clienteService.alterarSenha(1L, "senhaErrada", "senhaNova"));
+
+        assertEquals("Senha atual incorreta.", ex.getMessage());
+        verify(clienteRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao alterar senha com senha nova muito curta")
+    void deveLancarExcecaoAoAlterarSenhaComSenhaNovaCurta() {
+        cliente.setSenha("hashAntigo");
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(passwordEncoder.matches("senhaAntiga", "hashAntigo")).thenReturn(true);
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> clienteService.alterarSenha(1L, "senhaAntiga", "abc"));
+
+        assertEquals("A nova senha deve ter pelo menos 4 caracteres.", ex.getMessage());
+        verify(clienteRepository, never()).save(any());
     }
 
     @Test

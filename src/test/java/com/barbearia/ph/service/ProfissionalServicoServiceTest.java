@@ -90,26 +90,50 @@ class ProfissionalServicoServiceTest {
         assertEquals("ID do profissional serviço é obrigatório para update", ex.getMessage());
     }
 
-    // ---------- TESTE DO DELETE ----------
+    // ---------- TESTE DO DELETE (soft delete) ----------
     @Test
-    @DisplayName("Deve deletar ProfissionalServico com sucesso")
-    void deveDeletarProfissionalServicoComSucesso() {
-        doNothing().when(profServRepository).deleteById(1L);
+    @DisplayName("Deve marcar ProfissionalServico como inativo em vez de apagar (soft delete)")
+    void deveDesativarProfissionalServicoComSucesso() {
+        when(profServRepository.findById(1L)).thenReturn(Optional.of(profServ));
+        when(profServRepository.save(any())).thenReturn(profServ);
 
         profServService.delete(1L);
 
-        verify(profServRepository, times(1)).deleteById(1L);
+        assertFalse(profServ.isAtivo());
+        verify(profServRepository, times(1)).save(profServ);
+        verify(profServRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    @DisplayName("Deve manter o agendamento intacto ao desativar um serviço com agendamentos vinculados")
+    void deveManterAgendamentoAoDesativarServicoComAgendamentos() {
+        // Simula que existem agendamentos vinculados: como delete() nunca chama
+        // deleteById(), não há como isso violar a FK de agendamento_entity.
+        when(profServRepository.findById(1L)).thenReturn(Optional.of(profServ));
+        when(profServRepository.save(any())).thenReturn(profServ);
+
+        assertDoesNotThrow(() -> profServService.delete(1L));
+        verify(profServRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao desativar ProfissionalServico inexistente")
+    void deveLancarExcecaoAoDesativarProfissionalServicoInexistente() {
+        when(profServRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> profServService.delete(99L));
+        verify(profServRepository, never()).save(any());
     }
 
     // ---------- TESTE DO FIND ALL ----------
     @Test
-    @DisplayName("Deve retornar todos ProfissionalServico")
-    void deveRetornarTodosProfissionalServico() {
-        when(profServRepository.findAll()).thenReturn(List.of(profServ));
+    @DisplayName("Deve retornar só os ProfissionalServico ativos")
+    void deveRetornarApenasProfissionalServicoAtivos() {
+        when(profServRepository.findByAtivoTrue()).thenReturn(List.of(profServ));
 
         List<ProfissionalServicoEntity> lista = profServService.findAll();
 
         assertEquals(1, lista.size());
-        verify(profServRepository, times(1)).findAll();
+        verify(profServRepository, times(1)).findByAtivoTrue();
     }
 }

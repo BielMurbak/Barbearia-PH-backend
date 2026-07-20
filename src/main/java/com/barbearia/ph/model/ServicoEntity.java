@@ -29,6 +29,14 @@ public class ServicoEntity {
     @NotNull(message = "O campo duração é obrigatório")
     private int minDeDuracao;
 
+    // Soft delete: "excluir" um serviço só o tira do catálogo (some das listagens),
+    // nunca apaga a linha de verdade — agendamentos antigos referenciam essa linha
+    // por chave estrangeira e não podem ficar órfãos.
+    // columnDefinition com DEFAULT 1 é necessário pra migração (ddl-auto=update)
+    // não zerar os serviços já existentes ao criar essa coluna.
+    @Column(nullable = false, columnDefinition = "TINYINT(1) DEFAULT 1")
+    private boolean ativo = true;
+
     @OneToMany(mappedBy = "servicoEntity", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<ProfissionalServicoEntity> profissionalServicoEntity;

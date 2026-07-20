@@ -2,6 +2,7 @@ package com.barbearia.ph.service;
 
 import com.barbearia.ph.model.Especializacao;
 import com.barbearia.ph.model.ProfissionalEntity;
+import com.barbearia.ph.repository.ClienteRepository;
 import com.barbearia.ph.repository.ProfissionalRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +24,12 @@ class ProfissionalServiceTest {
 
     @Mock
     private ProfissionalRepository profissionalRepository;
+
+    @Mock
+    private ClienteRepository clienteRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private ProfissionalService profissionalService;
@@ -41,6 +49,7 @@ class ProfissionalServiceTest {
     @Test
     @DisplayName("TESTE DE INTEGRAÇÃO – Deve salvar profissional com sucesso")
     void deveSalvarProfissionalComSucesso() {
+        when(passwordEncoder.encode(any())).thenReturn("hashQualquer");
         when(profissionalRepository.save(any(ProfissionalEntity.class))).thenReturn(profissional);
 
         ProfissionalEntity salvo = profissionalService.save(profissional);
@@ -95,6 +104,8 @@ class ProfissionalServiceTest {
         novo.setEspecializacao(Especializacao.Barba);
 
         when(profissionalRepository.findById(1L)).thenReturn(Optional.of(profissional));
+        when(profissionalRepository.findByCelular("44 98888-9999")).thenReturn(Optional.empty());
+        when(clienteRepository.findByCelular("44 98888-9999")).thenReturn(Optional.empty());
         when(profissionalRepository.save(any(ProfissionalEntity.class))).thenReturn(profissional);
 
         ProfissionalEntity atualizado = profissionalService.update(1L, novo);
@@ -106,6 +117,52 @@ class ProfissionalServiceTest {
         assertEquals(Especializacao.Barba, atualizado.getEspecializacao());
         verify(profissionalRepository).findById(1L);
         verify(profissionalRepository).save(profissional);
+    }
+
+    @Test
+    @DisplayName("TESTE DE INTEGRAÇÃO – Deve lançar exceção ao atualizar celular já usado por um cliente")
+    void deveLancarExcecaoAoAtualizarCelularJaUsadoPorCliente() {
+        ProfissionalEntity novo = new ProfissionalEntity();
+        novo.setNome("João");
+        novo.setSobrenome("Santos");
+        novo.setCelular("44 98888-9999");
+        novo.setEspecializacao(Especializacao.Barba);
+
+        when(profissionalRepository.findById(1L)).thenReturn(Optional.of(profissional));
+        when(profissionalRepository.findByCelular("44 98888-9999")).thenReturn(Optional.empty());
+        when(clienteRepository.findByCelular("44 98888-9999"))
+                .thenReturn(Optional.of(new com.barbearia.ph.model.ClienteEntity()));
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> profissionalService.update(1L, novo));
+
+        assertEquals("Este número já está cadastrado.", ex.getMessage());
+        verify(profissionalRepository, never()).save(any());
+    }
+
+    // ---------- TESTES REDEFINIR SENHA ----------
+
+    @Test
+    @DisplayName("Deve redefinir a senha do profissional sem exigir a senha atual")
+    void deveRedefinirSenhaComSucesso() {
+        when(profissionalRepository.findById(1L)).thenReturn(Optional.of(profissional));
+        when(passwordEncoder.encode("novaSenha")).thenReturn("hashNovo");
+
+        profissionalService.redefinirSenha(1L, "novaSenha");
+
+        assertEquals("hashNovo", profissional.getSenha());
+        verify(profissionalRepository).save(profissional);
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao redefinir senha muito curta")
+    void deveLancarExcecaoAoRedefinirSenhaCurta() {
+        when(profissionalRepository.findById(1L)).thenReturn(Optional.of(profissional));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> profissionalService.redefinirSenha(1L, "abc"));
+
+        assertEquals("A nova senha deve ter pelo menos 4 caracteres.", ex.getMessage());
+        verify(profissionalRepository, never()).save(any());
     }
 
     @Test

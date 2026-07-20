@@ -2,9 +2,11 @@ package com.barbearia.ph.service;
 
 import com.barbearia.ph.model.AgendamentoEntity;
 import com.barbearia.ph.model.ClienteEntity;
+import com.barbearia.ph.model.ProfissionalEntity;
 import com.barbearia.ph.model.ProfissionalServicoEntity;
 import com.barbearia.ph.repository.AgendamentoRepository;
 import com.barbearia.ph.repository.ClienteRepository;
+import com.barbearia.ph.repository.ProfissionalRepository;
 import com.barbearia.ph.repository.ProfissionalServicoRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ public class AgendamentoService {
     private final AgendamentoRepository agendamentoRepository;
     private final ClienteRepository clienteRepository;
     private final ProfissionalServicoRepository profissionalServicoRepository;
+    private final ProfissionalRepository profissionalRepository;
     private final ClienteService clienteService;
 
     public AgendamentoEntity save(AgendamentoEntity agendamento) {
@@ -46,6 +49,7 @@ public class AgendamentoService {
                         profServ.getProfissionalEntity().getId());
 
         for (AgendamentoEntity ag : agendamentosDia) {
+            if (ag.getStatus() == AgendamentoEntity.StatusAgendamento.CANCELADO) continue;
             LocalDateTime inicioExistente = LocalDateTime.of(ag.getData(), LocalTime.parse(ag.getHorario()));
             int duracaoExistente = ag.getProfissionalServicoEntity().getServicoEntity().getMinDeDuracao();
             LocalDateTime fimExistente = inicioExistente.plusMinutes(duracaoExistente);
@@ -103,19 +107,44 @@ public class AgendamentoService {
         if (agendamentoEntity.getPreco() != null) {
             agendamento.setPreco(agendamentoEntity.getPreco());
         }
-        
+
         // Busca cliente completo
         if (agendamentoEntity.getClienteEntity() != null && agendamentoEntity.getClienteEntity().getId() != null) {
             ClienteEntity cliente = clienteRepository.findById(agendamentoEntity.getClienteEntity().getId())
                     .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
             agendamento.setClienteEntity(cliente);
         }
-        
+
         // Busca profissionalServico completo
         if (agendamentoEntity.getProfissionalServicoEntity() != null && agendamentoEntity.getProfissionalServicoEntity().getId() != null) {
             ProfissionalServicoEntity profServ = profissionalServicoRepository.findById(agendamentoEntity.getProfissionalServicoEntity().getId())
                     .orElseThrow(() -> new RuntimeException("ProfissionalServico não encontrado"));
             agendamento.setProfissionalServicoEntity(profServ);
+        }
+
+        // Reagendar pra uma nova data/horário precisa checar conflito igual ao save()
+        // — antes o update() salvava direto, sem checar se o novo horário já estava ocupado.
+        if (agendamento.getStatus() != AgendamentoEntity.StatusAgendamento.CANCELADO) {
+            int duracaoMinutos = agendamento.getProfissionalServicoEntity().getServicoEntity().getMinDeDuracao();
+            LocalDateTime inicioNovo = LocalDateTime.of(agendamento.getData(), LocalTime.parse(agendamento.getHorario()));
+            LocalDateTime fimNovo = inicioNovo.plusMinutes(duracaoMinutos);
+
+            List<AgendamentoEntity> agendamentosDia = agendamentoRepository
+                    .findByDataAndProfissionalServicoEntity_ProfissionalEntity_Id(agendamento.getData(),
+                            agendamento.getProfissionalServicoEntity().getProfissionalEntity().getId());
+
+            for (AgendamentoEntity ag : agendamentosDia) {
+                if (ag.getId().equals(id)) continue;
+                if (ag.getStatus() == AgendamentoEntity.StatusAgendamento.CANCELADO) continue;
+                LocalDateTime inicioExistente = LocalDateTime.of(ag.getData(), LocalTime.parse(ag.getHorario()));
+                int duracaoExistente = ag.getProfissionalServicoEntity().getServicoEntity().getMinDeDuracao();
+                LocalDateTime fimExistente = inicioExistente.plusMinutes(duracaoExistente);
+
+                boolean conflita = inicioNovo.isBefore(fimExistente) && fimNovo.isAfter(inicioExistente);
+                if (conflita) {
+                    throw new RuntimeException("Horário indisponível: conflito com outro agendamento.");
+                }
+            }
         }
 
         atualizarStatus(agendamento);
@@ -178,10 +207,15 @@ public class AgendamentoService {
         return agendamentoRepository.findAllWithDetails();
     }
 
+    // Carência de 1h depois do horário marcado antes de considerar concluído
+    // automaticamente — nesse intervalo o barbeiro tem tempo de confirmar o
+    // atendimento ou cancelar por não comparecimento antes do fechamento automático.
+    private static final long HORAS_CARENCIA_CONCLUSAO = 1;
+
     private void atualizarStatus(AgendamentoEntity agendamento) {
         LocalDateTime inicio = LocalDateTime.of(agendamento.getData(), LocalTime.parse(agendamento.getHorario()));
         if (agendamento.getStatus() != AgendamentoEntity.StatusAgendamento.CANCELADO) {
-            if (inicio.isBefore(LocalDateTime.now())) {
+            if (inicio.plusHours(HORAS_CARENCIA_CONCLUSAO).isBefore(LocalDateTime.now())) {
                 agendamento.setStatus(AgendamentoEntity.StatusAgendamento.CONCLUIDO);
             } else {
                 agendamento.setStatus(AgendamentoEntity.StatusAgendamento.PENDENTE);
@@ -193,5 +227,23 @@ public class AgendamentoService {
         ClienteEntity cliente = clienteRepository.findByCelular(celular)
                 .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
         return cliente.getId();
+    }
+
+    public Long getProfissionalIdByCelular(String celular) {
+        ProfissionalEntity profissional = profissionalRepository.findByCelular(celular)
+                .orElseThrow(() -> new RuntimeException("Profissional não encontrado"));
+        return profissional.getId();
+    }
+
+    // Usado pelo widget público de agendamento para saber quais horários já
+    // estão ocupados para um profissional numa data — não depende de login e
+    // não expõe dados de clientes. Ignora CANCELADO, então um horário cancelado
+    // volta a ficar disponível.
+    public List<AgendamentoEntity> findOcupadosPorProfissionalEData(LocalDate data, Long profissionalId) {
+        return agendamentoRepository
+                .findByDataAndProfissionalServicoEntity_ProfissionalEntity_Id(data, profissionalId)
+                .stream()
+                .filter(a -> a.getStatus() != AgendamentoEntity.StatusAgendamento.CANCELADO)
+                .toList();
     }
 }

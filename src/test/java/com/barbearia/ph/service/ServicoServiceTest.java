@@ -1,6 +1,8 @@
 package com.barbearia.ph.service;
 
+import com.barbearia.ph.model.ProfissionalServicoEntity;
 import com.barbearia.ph.model.ServicoEntity;
+import com.barbearia.ph.repository.ProfissionalServicoRepository;
 import com.barbearia.ph.repository.ServicoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +23,9 @@ class ServicoServiceTest {
 
     @Mock
     private ServicoRepository servicoRepository;
+
+    @Mock
+    private ProfissionalServicoRepository profissionalServicoRepository;
 
     @InjectMocks
     private ServicoService servicoService;
@@ -48,15 +53,15 @@ class ServicoServiceTest {
     }
 
     @Test
-    @DisplayName("TESTE DE UNIDADE – Deve retornar lista de serviços")
+    @DisplayName("TESTE DE UNIDADE – Deve retornar só os serviços ativos")
     void deveRetornarListaDeServicos() {
-        when(servicoRepository.findAll()).thenReturn(List.of(servico));
+        when(servicoRepository.findByAtivoTrue()).thenReturn(List.of(servico));
 
         List<ServicoEntity> resultado = servicoService.findAll();
 
         assertFalse(resultado.isEmpty());
         assertEquals(1, resultado.size());
-        verify(servicoRepository, times(1)).findAll();
+        verify(servicoRepository, times(1)).findByAtivoTrue();
     }
 
     @Test
@@ -102,13 +107,36 @@ class ServicoServiceTest {
     }
 
     @Test
-    @DisplayName("TESTE DE UNIDADE – Deve deletar serviço existente")
+    @DisplayName("TESTE DE UNIDADE – Deve marcar serviço como inativo em vez de apagar (soft delete)")
     void deveDeletarServicoComSucesso() {
         when(servicoRepository.findById(1L)).thenReturn(Optional.of(servico));
+        when(servicoRepository.save(any())).thenReturn(servico);
+        when(profissionalServicoRepository.findByServicoEntity(servico)).thenReturn(List.of());
 
         servicoService.delete(1L);
 
-        verify(servicoRepository).deleteById(1L);
+        assertFalse(servico.isAtivo());
+        verify(servicoRepository).save(servico);
+        verify(servicoRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    @DisplayName("TESTE DE UNIDADE – Deve desativar também os vínculos de barbeiro ao desativar o serviço")
+    void deveDesativarVinculosDeBarbeiroAoDeletarServico() {
+        ProfissionalServicoEntity vinculo1 = new ProfissionalServicoEntity();
+        vinculo1.setId(10L);
+        ProfissionalServicoEntity vinculo2 = new ProfissionalServicoEntity();
+        vinculo2.setId(11L);
+
+        when(servicoRepository.findById(1L)).thenReturn(Optional.of(servico));
+        when(servicoRepository.save(any())).thenReturn(servico);
+        when(profissionalServicoRepository.findByServicoEntity(servico)).thenReturn(List.of(vinculo1, vinculo2));
+
+        servicoService.delete(1L);
+
+        assertFalse(vinculo1.isAtivo());
+        assertFalse(vinculo2.isAtivo());
+        verify(profissionalServicoRepository).saveAll(List.of(vinculo1, vinculo2));
     }
 
     @Test

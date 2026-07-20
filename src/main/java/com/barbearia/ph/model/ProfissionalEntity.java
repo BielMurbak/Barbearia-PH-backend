@@ -24,7 +24,7 @@ public class ProfissionalEntity extends PessoaAbstract implements UserDetails {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @NotNull(message = "O campo especialização é obrigatório")
+    @NotNull(message = "O campo especializaÃ§Ã£o Ã© obrigatÃ³rio")
     private Especializacao especializacao;
 
     @Enumerated(EnumType.STRING)
@@ -61,3 +61,4 @@ public class ProfissionalEntity extends PessoaAbstract implements UserDetails {
     @Override
     public boolean isEnabled() { return true; }
 }
+

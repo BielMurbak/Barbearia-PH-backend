@@ -10,7 +10,9 @@ import java.util.List;
 public interface ServicoRepository extends JpaRepository<ServicoEntity, Long> {
     
     List<ServicoEntity> findByDescricaoIgnoreCaseContaining(String descricao);
-    
+
+    List<ServicoEntity> findByAtivoTrue();
+
     List<ServicoEntity> findByMinDeDuracaoLessThanEqual(int duracao);
     
     @Query("SELECT s FROM ServicoEntity s WHERE s.minDeDuracao BETWEEN :duracaoMin AND :duracaoMax")

@@ -6,6 +6,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -62,6 +64,32 @@ public class ClienteController {
         }
     }
 
+    @PutMapping("/{id}/senha")
+    public ResponseEntity<?> alterarSenha(
+            @PathVariable Long id,
+            @RequestBody AlterarSenhaRequest request,
+            @AuthenticationPrincipal UserDetails user) {
+        try {
+            boolean isAdmin = user != null && user.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+            if (!isAdmin) {
+                if (user == null) {
+                    return ResponseEntity.status(401).body("Autenticação necessária.");
+                }
+                ClienteEntity dono = clienteService.findById(id);
+                if (!dono.getCelular().equals(user.getUsername())) {
+                    return ResponseEntity.status(403).body("Você só pode alterar sua própria senha.");
+                }
+            }
+
+            clienteService.alterarSenha(id, request.getSenhaAtual(), request.getNovaSenha());
+            return ResponseEntity.ok("Senha atualizada com sucesso.");
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         try {
@@ -104,5 +132,15 @@ public class ClienteController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Erro ao buscar por nome completo: " + ex.getMessage());
         }
+    }
+
+    public static class AlterarSenhaRequest {
+        private String senhaAtual;
+        private String novaSenha;
+
+        public String getSenhaAtual() { return senhaAtual; }
+        public void setSenhaAtual(String senhaAtual) { this.senhaAtual = senhaAtual; }
+        public String getNovaSenha() { return novaSenha; }
+        public void setNovaSenha(String novaSenha) { this.novaSenha = novaSenha; }
     }
 }

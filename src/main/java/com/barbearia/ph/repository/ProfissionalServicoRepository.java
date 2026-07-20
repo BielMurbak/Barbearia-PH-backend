@@ -12,7 +12,11 @@ import java.util.List;
 public interface ProfissionalServicoRepository extends JpaRepository<ProfissionalServicoEntity, Long> {
     
     List<ProfissionalServicoEntity> findByProfissionalEntity(ProfissionalEntity profissional);
-    
+
+    List<ProfissionalServicoEntity> findByAtivoTrue();
+
+    List<ProfissionalServicoEntity> findByServicoEntity(ServicoEntity servico);
+
     List<ProfissionalServicoEntity> findByPrecoLessThanEqual(Double preco);
     
     @Query("SELECT ps FROM ProfissionalServicoEntity ps WHERE ps.preco BETWEEN :precoMin AND :precoMax ORDER BY ps.preco")

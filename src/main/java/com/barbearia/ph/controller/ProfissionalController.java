@@ -63,6 +63,16 @@ public class ProfissionalController {
         }
     }
 
+    @PutMapping("/{id}/senha")
+    public ResponseEntity<?> redefinirSenha(@PathVariable Long id, @RequestBody RedefinirSenhaRequest request) {
+        try {
+            profissionalService.redefinirSenha(id, request.getNovaSenha());
+            return ResponseEntity.ok("Senha redefinida com sucesso.");
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         try {
@@ -95,5 +105,12 @@ public class ProfissionalController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Erro ao buscar profissionais por especialização: " + ex.getMessage());
         }
+    }
+
+    public static class RedefinirSenhaRequest {
+        private String novaSenha;
+
+        public String getNovaSenha() { return novaSenha; }
+        public void setNovaSenha(String novaSenha) { this.novaSenha = novaSenha; }
     }
 }
