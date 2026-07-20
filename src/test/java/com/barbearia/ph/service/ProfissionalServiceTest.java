@@ -44,6 +44,7 @@ class ProfissionalServiceTest {
         profissional.setSobrenome("Silva");
         profissional.setCelular("45 99999-8888");
         profissional.setEspecializacao(Especializacao.Corte);
+        profissional.setSenha("senha123");
     }
 
     @Test

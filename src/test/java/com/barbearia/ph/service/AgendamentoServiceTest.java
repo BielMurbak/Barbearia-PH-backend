@@ -1,5 +1,6 @@
 package com.barbearia.ph.service;
 
+import com.barbearia.ph.dto.AgendamentoRequestDTO;
 import com.barbearia.ph.model.*;
 import com.barbearia.ph.repository.AgendamentoRepository;
 import com.barbearia.ph.repository.ClienteRepository;
@@ -80,6 +81,18 @@ class AgendamentoServiceTest {
         agendamento.setProfissionalServicoEntity(profServ);
     }
 
+    private AgendamentoRequestDTO toDto(AgendamentoEntity e) {
+        AgendamentoRequestDTO dto = new AgendamentoRequestDTO();
+        dto.setData(e.getData());
+        dto.setLocal(e.getLocal());
+        dto.setHorario(e.getHorario());
+        dto.setObservacoes(e.getObservacoes());
+        dto.setPreco(e.getPreco());
+        dto.setClienteId(e.getClienteEntity() != null ? e.getClienteEntity().getId() : null);
+        dto.setProfissionalServicoId(e.getProfissionalServicoEntity() != null ? e.getProfissionalServicoEntity().getId() : null);
+        return dto;
+    }
+
     // ---------- TESTES DO SAVE ----------
 
     @Test
@@ -89,9 +102,9 @@ class AgendamentoServiceTest {
         when(profissionalServicoRepository.findById(1L)).thenReturn(Optional.of(profServ));
         when(agendamentoRepository.findByDataAndProfissionalServicoEntity_ProfissionalEntity_Id(
                 any(), anyLong())).thenReturn(List.of());
-        when(agendamentoRepository.save(any())).thenReturn(agendamento);
+        when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        AgendamentoEntity salvo = agendamentoService.save(agendamento);
+        AgendamentoEntity salvo = agendamentoService.save(toDto(agendamento));
 
         assertNotNull(salvo);
         assertEquals("Barbearia PH", salvo.getLocal());
@@ -115,9 +128,9 @@ class AgendamentoServiceTest {
         when(profissionalServicoRepository.findById(1L)).thenReturn(Optional.of(profServ));
         when(agendamentoRepository.findByDataAndProfissionalServicoEntity_ProfissionalEntity_Id(
                 any(), anyLong())).thenReturn(List.of());
-        when(agendamentoRepository.save(any())).thenReturn(agendamentoPassado);
+        when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        AgendamentoEntity salvo = agendamentoService.save(agendamentoPassado);
+        AgendamentoEntity salvo = agendamentoService.save(toDto(agendamentoPassado));
 
         assertNotNull(salvo);
         assertEquals(AgendamentoEntity.StatusAgendamento.CONCLUIDO, salvo.getStatus());
@@ -141,9 +154,9 @@ class AgendamentoServiceTest {
         when(profissionalServicoRepository.findById(1L)).thenReturn(Optional.of(profServ));
         when(agendamentoRepository.findByDataAndProfissionalServicoEntity_ProfissionalEntity_Id(
                 any(), anyLong())).thenReturn(List.of());
-        when(agendamentoRepository.save(any())).thenReturn(agendamentoRecente);
+        when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        AgendamentoEntity salvo = agendamentoService.save(agendamentoRecente);
+        AgendamentoEntity salvo = agendamentoService.save(toDto(agendamentoRecente));
 
         assertEquals(AgendamentoEntity.StatusAgendamento.PENDENTE, salvo.getStatus());
     }
@@ -153,7 +166,7 @@ class AgendamentoServiceTest {
     void deveLancarExcecaoQuandoClienteNaoExisteNoSave() {
         when(clienteRepository.findById(1L)).thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> agendamentoService.save(agendamento));
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> agendamentoService.save(toDto(agendamento)));
         assertEquals("Cliente não encontrado", ex.getMessage());
     }
 
@@ -163,7 +176,7 @@ class AgendamentoServiceTest {
         when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
         when(profissionalServicoRepository.findById(1L)).thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> agendamentoService.save(agendamento));
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> agendamentoService.save(toDto(agendamento)));
         assertEquals("ProfissionalServico não encontrado", ex.getMessage());
     }
 
@@ -182,7 +195,7 @@ class AgendamentoServiceTest {
         when(agendamentoRepository.findByDataAndProfissionalServicoEntity_ProfissionalEntity_Id(
                 any(), anyLong())).thenReturn(List.of(existente));
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> agendamentoService.save(agendamento));
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> agendamentoService.save(toDto(agendamento)));
         assertTrue(ex.getMessage().contains("Horário indisponível"));
     }
 
@@ -203,7 +216,7 @@ class AgendamentoServiceTest {
                 any(), anyLong())).thenReturn(List.of(cancelado));
         when(agendamentoRepository.save(any())).thenReturn(agendamento);
 
-        AgendamentoEntity salvo = agendamentoService.save(agendamento);
+        AgendamentoEntity salvo = agendamentoService.save(toDto(agendamento));
 
         assertNotNull(salvo);
         verify(agendamentoRepository, times(1)).save(any());
@@ -226,7 +239,7 @@ class AgendamentoServiceTest {
                 any(), anyLong())).thenReturn(List.of(existente));
         when(agendamentoRepository.save(any())).thenReturn(agendamento);
 
-        AgendamentoEntity salvo = agendamentoService.save(agendamento);
+        AgendamentoEntity salvo = agendamentoService.save(toDto(agendamento));
 
         assertNotNull(salvo);
         verify(agendamentoRepository, times(1)).save(any());
@@ -293,7 +306,7 @@ class AgendamentoServiceTest {
         atualizado.setClienteEntity(cliente);
         atualizado.setProfissionalServicoEntity(profServ);
 
-        AgendamentoEntity resultado = agendamentoService.update(1L, atualizado);
+        AgendamentoEntity resultado = agendamentoService.update(1L, toDto(atualizado));
 
         assertEquals("PH Premium", resultado.getLocal());
         verify(agendamentoRepository, times(1)).save(any());
@@ -322,7 +335,7 @@ class AgendamentoServiceTest {
         atualizado.setClienteEntity(cliente);
         atualizado.setProfissionalServicoEntity(profServ);
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> agendamentoService.update(1L, atualizado));
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> agendamentoService.update(1L, toDto(atualizado)));
         assertTrue(ex.getMessage().contains("Horário indisponível"));
         verify(agendamentoRepository, never()).save(any());
     }
@@ -351,7 +364,7 @@ class AgendamentoServiceTest {
         atualizado.setClienteEntity(cliente);
         atualizado.setProfissionalServicoEntity(profServ);
 
-        AgendamentoEntity resultado = agendamentoService.update(1L, atualizado);
+        AgendamentoEntity resultado = agendamentoService.update(1L, toDto(atualizado));
 
         assertNotNull(resultado);
         verify(agendamentoRepository, times(1)).save(any());

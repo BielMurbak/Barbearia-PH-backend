@@ -1,5 +1,7 @@
 package com.barbearia.ph.controller;
 
+import com.barbearia.ph.dto.ClienteRequestDTO;
+import com.barbearia.ph.dto.ClienteResponseDTO;
 import com.barbearia.ph.model.ClienteEntity;
 import com.barbearia.ph.service.ClienteService;
 import org.junit.jupiter.api.DisplayName;
@@ -12,14 +14,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
-
 
 @ExtendWith(MockitoExtension.class)
 class ClienteControllerTest {
@@ -30,288 +29,180 @@ class ClienteControllerTest {
     @InjectMocks
     ClienteController clienteController;
 
-    @Test
-    @DisplayName("TESTE DE UNIDADE – Salvar cliente com dados válidos deve retornar 200 OK e o cliente salvo")
-    void deveSalvarClienteComSucesso() {
-        ClienteEntity cliente = new ClienteEntity();
-        cliente.setNome("Jorginho");
-        cliente.setSobrenome("Scarabelot");
-        cliente.setCelular("+55 45 99980-6733");
-
-        when(clienteService.save(cliente)).thenReturn(cliente);
-
-        ResponseEntity<?> response = clienteController.save(cliente);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(cliente, response.getBody());
+    private ClienteRequestDTO dto() {
+        ClienteRequestDTO dto = new ClienteRequestDTO();
+        dto.setNome("Pedro");
+        dto.setSobrenome("Flamengo");
+        dto.setCelular("45 99980-7777");
+        dto.setSenha("senha123");
+        return dto;
     }
 
+    private ClienteEntity entidade() {
+        ClienteEntity cliente = new ClienteEntity();
+        cliente.setId(1L);
+        cliente.setNome("Pedro");
+        cliente.setSobrenome("Flamengo");
+        cliente.setCelular("45 99980-7777");
+        return cliente;
+    }
 
     @Test
-    @DisplayName("TESTE DE UNIDADE – Salvar cliente com dados inválidos deve retornar BAD_REQUEST com mensagem de erro")
-    void deveRetornarBadRequestQuandoClienteInvalido () {
-        ClienteEntity clienteInvalido = new ClienteEntity();
-        clienteInvalido.setNome("");
-        clienteInvalido.setSobrenome("");
-        clienteInvalido.setCelular("");
+    @DisplayName("TESTE DE UNIDADE – Salvar cliente com dados válidos deve retornar 201 CREATED e o cliente salvo")
+    void deveSalvarClienteComSucesso() {
+        ClienteEntity salvo = entidade();
+        when(clienteService.save(any())).thenReturn(salvo);
 
-        when(clienteService.save(clienteInvalido))
-                .thenThrow(new RuntimeException("Dados inválidos"));
+        ResponseEntity<ClienteResponseDTO> response = clienteController.save(dto());
 
-        ResponseEntity<?> response = clienteController.save(clienteInvalido);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(salvo.getNome(), response.getBody().getNome());
+    }
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    @Test
+    @DisplayName("TESTE DE UNIDADE – Salvar cliente com dados inválidos deve propagar a exceção")
+    void deveLancarExcecaoQuandoClienteInvalido() {
+        when(clienteService.save(any())).thenThrow(new RuntimeException("Dados inválidos"));
 
+        assertThrows(RuntimeException.class, () -> clienteController.save(dto()));
     }
 
     @Test
     @DisplayName("TESTE DE UNIDADE – Buscar todos os clientes deve retornar lista e status 200 OK")
     void deveRetornarListaClientes() {
-
-        ClienteEntity cliente = new ClienteEntity();
-
-        cliente.setId(1L);
-        cliente.setNome("Pedro");
-        cliente.setSobrenome("Flamengo");
-        cliente.setCelular("45 99980-7777");
-
         List<ClienteEntity> clientes = new ArrayList<>();
-        clientes.add(cliente);
+        clientes.add(entidade());
 
         when(clienteService.findAll()).thenReturn(clientes);
 
-        ResponseEntity<?> response = clienteController.findAll();
+        ResponseEntity<List<ClienteResponseDTO>> response = clienteController.findAll();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(clientes, response.getBody());
-    }
-
-    @Test
-    @DisplayName("TESTE DE UNIDADE – Buscar todos os clientes lança exceção deve retornar BAD_REQUEST")
-    void deveRetornarErroListaClientes() {
-
-        when(clienteService.findAll()).thenThrow(new RuntimeException("Erro simulado"));
-
-        ResponseEntity<?> response = clienteController.findAll();
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-
-
+        assertEquals(1, response.getBody().size());
     }
 
     @Test
     @DisplayName("TESTE DE UNIDADE – Buscar cliente por ID existente deve retornar cliente e status 200 OK")
-    void  deveRetornarClientePorid() {
+    void deveRetornarClientePorId() {
+        when(clienteService.findById(1L)).thenReturn(entidade());
 
-        ClienteEntity cliente = new ClienteEntity();
-
-        cliente.setId(1L);
-        cliente.setNome("Pedro");
-        cliente.setSobrenome("Flamengo");
-        cliente.setCelular("45 99980-7777");
-
-        when(clienteService.findById(1L)).thenReturn(cliente);
-
-        ResponseEntity<?> response = clienteController.findById(1L);
+        ResponseEntity<ClienteResponseDTO> response = clienteController.findById(1L);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-
+        assertEquals("Pedro", response.getBody().getNome());
     }
 
     @Test
-    @DisplayName("TESTE DE UNIDADE – Buscar cliente por ID inexistente deve retornar BAD_REQUEST")
-    void  deveRetornarErroClientePorid () {
+    @DisplayName("TESTE DE UNIDADE – Buscar cliente por ID inexistente deve propagar a exceção")
+    void deveLancarExcecaoClientePorIdInexistente() {
+        when(clienteService.findById(99L)).thenThrow(new RuntimeException("Cliente não encontrado"));
 
-        ClienteEntity cliente = new ClienteEntity();
-
-        cliente.setId(2L);
-        cliente.setNome("Pedro");
-        cliente.setSobrenome("Flamengo");
-        cliente.setCelular("45 99980-7777");
-
-
-        when(clienteService.findById(1L)).thenThrow(new RuntimeException(("Erro simulado")));
-
-        ResponseEntity<?> response = clienteController.findById(1L);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-
+        assertThrows(RuntimeException.class, () -> clienteController.findById(99L));
     }
 
     @Test
     @DisplayName("TESTE DE UNIDADE – Atualizar cliente existente deve retornar cliente atualizado e status 200 OK")
     void deveAtualizarClienteComSucesso() {
-        ClienteEntity cliente = new ClienteEntity();
-        cliente.setId(2L);
-        cliente.setNome("Pedro");
-        cliente.setSobrenome("Flamengo");
-        cliente.setCelular("45 99980-7777");
+        ClienteEntity atualizado = entidade();
+        when(clienteService.update(eq(1L), any())).thenReturn(atualizado);
 
-        when(clienteService.update(2L, cliente)).thenReturn(cliente);
-
-        ResponseEntity<?> response = clienteController.update(2L, cliente);
+        ResponseEntity<ClienteResponseDTO> response = clienteController.update(1L, dto());
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(cliente, response.getBody());
+        assertEquals(atualizado.getNome(), response.getBody().getNome());
     }
 
     @Test
-    @DisplayName("TESTE DE UNIDADE – Atualizar cliente inexistente deve retornar BAD_REQUEST")
-    void deveRetornarBadRequestQuandoAtualizacaoFalha() {
-        ClienteEntity cliente = new ClienteEntity();
-        cliente.setId(2L);
+    @DisplayName("TESTE DE UNIDADE – Atualizar cliente inexistente deve propagar a exceção")
+    void deveLancarExcecaoQuandoAtualizacaoFalha() {
+        when(clienteService.update(eq(99L), any())).thenThrow(new RuntimeException("Cliente não encontrado"));
 
-        when(clienteService.update(2L, cliente)).thenThrow(new RuntimeException("Cliente não encontrado"));
-
-
-        ResponseEntity<?> response = clienteController.update(2L, cliente);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-
+        assertThrows(RuntimeException.class, () -> clienteController.update(99L, dto()));
     }
 
     @Test
     @DisplayName("TESTE DE UNIDADE – Deletar cliente existente deve retornar status 200 OK")
-    void deveRetornarOkQuandoDeletarCliente(){
+    void deveRetornarOkQuandoDeletarCliente() {
+        Long idCliente = 2L;
 
-       Long idCLiente = 2L;
+        doNothing().when(clienteService).delete(idCliente);
 
-        doNothing().when(clienteService).delete(idCLiente);
+        ResponseEntity<String> response = clienteController.delete(idCliente);
 
-        ResponseEntity<?> response = clienteController.delete(idCLiente);
-
-       assertEquals(HttpStatus.OK,response.getStatusCode());
-
+        assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
     @Test
-    @DisplayName("TESTE DE UNIDADE – Deletar cliente inexistente deve retornar BAD_REQUEST")
-    void  deveRetornarErroQuandoDeletarCliente(){
+    @DisplayName("TESTE DE UNIDADE – Deletar cliente inexistente deve propagar a exceção")
+    void deveLancarExcecaoQuandoDeletarCliente() {
+        Long idCliente = 2L;
 
-        Long idCLiente = 2L;
+        doThrow(new RuntimeException("Cliente não encontrado")).when(clienteService).delete(idCliente);
 
-        doThrow(new RuntimeException("Cliente nao encontrado")).when(clienteService).delete(idCLiente);
-
-
-        ResponseEntity<?> response = clienteController.delete(idCLiente);
-
-        assertEquals(HttpStatus.BAD_REQUEST,response.getStatusCode());
-
+        assertThrows(RuntimeException.class, () -> clienteController.delete(idCliente));
     }
 
     @Test
-    @DisplayName("TESTE DE UNIDADE – Deletar cliente inexistente deve retornar BAD_REQUEST")
-    void deveRetornarOClientePeloNome() {
-        ClienteEntity cliente = new ClienteEntity();
-        cliente.setId(1L);
-        cliente.setNome("Pedro");
-        cliente.setSobrenome("Flamengo");
-        cliente.setCelular("45 99980-7777");
-
+    @DisplayName("TESTE DE UNIDADE – Buscar cliente pelo nome deve retornar lista e status 200 OK")
+    void deveRetornarClientePeloNome() {
         List<ClienteEntity> clienteLista = new ArrayList<>();
-        clienteLista.add(cliente);
-
+        clienteLista.add(entidade());
 
         when(clienteService.findByNome("Pedro")).thenReturn(clienteLista);
 
-
-        ResponseEntity<?> response = clienteController.findByNome("Pedro");
+        ResponseEntity<List<ClienteResponseDTO>> response = clienteController.findByNome("Pedro");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(clienteLista, response.getBody());
+        assertEquals(1, response.getBody().size());
     }
 
     @Test
-    @DisplayName("TESTE DE UNIDADE – Buscar cliente pelo nome inexistente deve retornar BAD_REQUEST")
-    void  deveRetornarErroProcurarClientePeloNome() {
+    @DisplayName("TESTE DE UNIDADE – Buscar cliente pelo nome inexistente deve propagar a exceção")
+    void deveLancarExcecaoProcurarClientePeloNome() {
+        when(clienteService.findByNome("Ninguem")).thenThrow(new RuntimeException("Cliente não encontrado pelo nome"));
 
-        when(clienteService.findByNome("Pedro")).thenThrow(new RuntimeException("Cliente nao encontrado pelo nome"));
-
-        ResponseEntity<?> response = clienteController.findByNome("Pedro");
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertThrows(RuntimeException.class, () -> clienteController.findByNome("Ninguem"));
     }
 
-
     @Test
-    @DisplayName("Deve retornar o cliente pelo numero")
-    void deveRetornarOClientePeloNumeroo() {
-        ClienteEntity cliente = new ClienteEntity();
-        cliente.setId(1L);
-        cliente.setNome("Pedro");
-        cliente.setSobrenome("Flamengo");
-        cliente.setCelular("45 99980-7777");
-
+    @DisplayName("Deve retornar o cliente pelo número")
+    void deveRetornarClientePeloNumero() {
         List<ClienteEntity> clienteLista = new ArrayList<>();
-        clienteLista.add(cliente);
-
+        clienteLista.add(entidade());
 
         when(clienteService.findByCelular("45 99980-7777")).thenReturn(clienteLista);
 
-
-        ResponseEntity<?> response = clienteController.findByCelular("45 99980-7777");
+        ResponseEntity<List<ClienteResponseDTO>> response = clienteController.findByCelular("45 99980-7777");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-
     }
 
     @Test
-    @DisplayName("TESTE DE UNIDADE – Buscar cliente pelo nome inexistente deve retornar BAD_REQUEST")
-    void deveRetornarErroProcurarClientePeloNumero() {
+    @DisplayName("TESTE DE UNIDADE – Buscar cliente pelo número inexistente deve propagar a exceção")
+    void deveLancarExcecaoProcurarClientePeloNumero() {
+        when(clienteService.findByCelular("00 0000-0000")).thenThrow(new RuntimeException("Erro ao procurar cliente pelo número"));
 
-        when(clienteService.findByCelular("45 99980-7777")).thenThrow(new RuntimeException( "Erro ao procurar cliente pelo numero"));
-        ResponseEntity<?> response = clienteController.findByCelular("45 99980-7777");
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-
+        assertThrows(RuntimeException.class, () -> clienteController.findByCelular("00 0000-0000"));
     }
 
     @Test
     @DisplayName("TESTE DE UNIDADE – Buscar cliente pelo nome completo deve retornar lista e status 200 OK")
     void deveRetornarClientePeloNomeCompleto() {
-        ClienteEntity cliente = new ClienteEntity();
-        cliente.setId(1L);
-        cliente.setNome("Pedro");
-        cliente.setSobrenome("Flamengo");
-        cliente.setCelular("45 99980-7777");
-
         List<ClienteEntity> clienteLista = new ArrayList<>();
-        clienteLista.add(cliente);
+        clienteLista.add(entidade());
 
         when(clienteService.findByNomeCompleto("Pedro Flamengo")).thenReturn(clienteLista);
 
-        ResponseEntity<?> response = clienteController.findByNomeCompleto("Pedro Flamengo");
+        ResponseEntity<List<ClienteResponseDTO>> response = clienteController.findByNomeCompleto("Pedro Flamengo");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-
     }
 
     @Test
-    @DisplayName("TESTE DE UNIDADE – Buscar cliente pelo nome completo inexistente deve retornar BAD_REQUEST")
-    void deveRetornarErroClientePeloNomeCompleto() {
+    @DisplayName("TESTE DE UNIDADE – Buscar cliente pelo nome completo inexistente deve propagar a exceção")
+    void deveLancarExcecaoClientePeloNomeCompleto() {
+        when(clienteService.findByNomeCompleto("Ninguem Aqui")).thenThrow(new RuntimeException("Erro ao retornar cliente pelo nome completo"));
 
-        when(clienteService.findByNomeCompleto("Pedro Flamengo")).thenThrow(new RuntimeException("Erro ao retornar cliente pelo nome completo"));
-
-        ResponseEntity<?> response = clienteController.findByNomeCompleto("Pedro Flamengo");
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-
+        assertThrows(RuntimeException.class, () -> clienteController.findByNomeCompleto("Ninguem Aqui"));
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Table(name = "agendamento")
 public class AgendamentoEntity {
 
     @Id

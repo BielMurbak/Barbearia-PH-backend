@@ -1,5 +1,8 @@
 package com.barbearia.ph.controller;
 
+import com.barbearia.ph.dto.DtoMapper;
+import com.barbearia.ph.dto.ProfissionalRequestDTO;
+import com.barbearia.ph.dto.ProfissionalResponseDTO;
 import com.barbearia.ph.model.Especializacao;
 import com.barbearia.ph.model.ProfissionalEntity;
 import com.barbearia.ph.service.ProfissionalService;
@@ -20,47 +23,27 @@ public class ProfissionalController {
     private final ProfissionalService profissionalService;
 
     @PostMapping
-    public ResponseEntity<?> save(@Valid @RequestBody ProfissionalEntity profissionalEntity) {
-        try {
-            ProfissionalEntity salvo = profissionalService.save(profissionalEntity);
-            return ResponseEntity.ok(salvo);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao salvar profissional: " + ex.getMessage());
-        }
+    public ResponseEntity<ProfissionalResponseDTO> save(@Valid @RequestBody ProfissionalRequestDTO dto) {
+        ProfissionalEntity salvo = profissionalService.save(DtoMapper.toEntity(dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(DtoMapper.toResponse(salvo));
     }
 
     @GetMapping
-    public ResponseEntity<?> findAll() {
-        try {
-            List<ProfissionalEntity> profissionais = profissionalService.findAll();
-            return ResponseEntity.ok(profissionais);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao listar profissionais: " + ex.getMessage());
-        }
+    public ResponseEntity<List<ProfissionalResponseDTO>> findAll() {
+        List<ProfissionalResponseDTO> profissionais = profissionalService.findAll().stream()
+                .map(DtoMapper::toResponse).toList();
+        return ResponseEntity.ok(profissionais);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> findById(@PathVariable Long id) {
-        try {
-            ProfissionalEntity profissional = profissionalService.findById(id);
-            return ResponseEntity.ok(profissional);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao buscar profissional com ID " + id + ": " + ex.getMessage());
-        }
+    public ResponseEntity<ProfissionalResponseDTO> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(DtoMapper.toResponse(profissionalService.findById(id)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody ProfissionalEntity profissionalEntity) {
-        try {
-            ProfissionalEntity atualizado = profissionalService.update(id, profissionalEntity);
-            return ResponseEntity.ok(atualizado);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao atualizar profissional com ID " + id + ": " + ex.getMessage());
-        }
+    public ResponseEntity<ProfissionalResponseDTO> update(@PathVariable Long id, @Valid @RequestBody ProfissionalRequestDTO dto) {
+        ProfissionalEntity atualizado = profissionalService.update(id, DtoMapper.toEntity(dto));
+        return ResponseEntity.ok(DtoMapper.toResponse(atualizado));
     }
 
     @PutMapping("/{id}/senha")
@@ -74,37 +57,24 @@ public class ProfissionalController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
-        try {
-            profissionalService.delete(id);
-            return ResponseEntity.ok("Profissional com ID " + id + " removido com sucesso.");
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao deletar profissional com ID " + id + ": " + ex.getMessage());
-        }
+    public ResponseEntity<String> delete(@PathVariable Long id) {
+        profissionalService.delete(id);
+        return ResponseEntity.ok("Profissional com ID " + id + " removido com sucesso.");
     }
 
     @GetMapping("/nome")
-    public ResponseEntity<?> findByNome(@RequestParam String nome) {
-        try {
-            List<ProfissionalEntity> profissionais = profissionalService.findByNome(nome);
-            return ResponseEntity.ok(profissionais);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao buscar profissionais por nome: " + ex.getMessage());
-        }
+    public ResponseEntity<List<ProfissionalResponseDTO>> findByNome(@RequestParam String nome) {
+        List<ProfissionalResponseDTO> profissionais = profissionalService.findByNome(nome).stream()
+                .map(DtoMapper::toResponse).toList();
+        return ResponseEntity.ok(profissionais);
     }
 
     @GetMapping("/especializacao")
-    public ResponseEntity<?> findByEspecializacao(@RequestParam String especializacao) {
-        try {
-            Especializacao esp = Especializacao.valueOf(especializacao);
-            List<ProfissionalEntity> profissionais = profissionalService.findByEspecializacao(esp);
-            return ResponseEntity.ok(profissionais);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao buscar profissionais por especialização: " + ex.getMessage());
-        }
+    public ResponseEntity<List<ProfissionalResponseDTO>> findByEspecializacao(@RequestParam String especializacao) {
+        Especializacao esp = Especializacao.valueOf(especializacao.toUpperCase());
+        List<ProfissionalResponseDTO> profissionais = profissionalService.findByEspecializacao(esp).stream()
+                .map(DtoMapper::toResponse).toList();
+        return ResponseEntity.ok(profissionais);
     }
 
     public static class RedefinirSenhaRequest {

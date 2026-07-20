@@ -17,6 +17,7 @@ import java.util.List;
 @Data
 @Entity
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Table(name = "profissional")
 public class ProfissionalEntity extends PessoaAbstract implements UserDetails {
 
     @Id

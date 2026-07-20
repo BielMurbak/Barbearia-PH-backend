@@ -17,9 +17,11 @@ public class ProfissionalService {
     private final ClienteRepository clienteRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public ProfissionalEntity save(ProfissionalEntity profissionalEntity){
+    public ProfissionalEntity save(ProfissionalEntity profissionalEntity) {
         // Sem isso, a senha ficava salva em texto puro e o login nunca batia
-        profissionalEntity.setSenha(passwordEncoder.encode(profissionalEntity.getSenha()));
+        if (profissionalEntity.getSenha() != null && !profissionalEntity.getSenha().isBlank()) {
+            profissionalEntity.setSenha(passwordEncoder.encode(profissionalEntity.getSenha()));
+        }
         return profissionalRepository.save(profissionalEntity);
     }
 

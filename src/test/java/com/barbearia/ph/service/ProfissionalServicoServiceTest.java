@@ -1,6 +1,12 @@
 package com.barbearia.ph.service;
 
+import com.barbearia.ph.dto.ProfissionalServicoRequestDTO;
+import com.barbearia.ph.model.ProfissionalEntity;
 import com.barbearia.ph.model.ProfissionalServicoEntity;
+import com.barbearia.ph.model.ServicoEntity;
+import com.barbearia.ph.repository.ProfissionalRepository;
+import com.barbearia.ph.repository.ProfissionalServicoRepository;
+import com.barbearia.ph.repository.ServicoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,32 +25,62 @@ import static org.mockito.Mockito.*;
 class ProfissionalServicoServiceTest {
 
     @Mock
-    private com.barbearia.ph.repository.ProfissionalServicoRepository profServRepository;
+    private ProfissionalServicoRepository profServRepository;
+    @Mock
+    private ProfissionalRepository profissionalRepository;
+    @Mock
+    private ServicoRepository servicoRepository;
 
     @InjectMocks
     private ProfissionalServicoService profServService;
 
     private ProfissionalServicoEntity profServ;
+    private ProfissionalEntity profissional;
+    private ServicoEntity servico;
+    private ProfissionalServicoRequestDTO dto;
 
     @BeforeEach
     void setUp() {
+        profissional = new ProfissionalEntity();
+        profissional.setId(1L);
+
+        servico = new ServicoEntity();
+        servico.setId(1L);
+
         profServ = new ProfissionalServicoEntity();
         profServ.setId(1L);
         profServ.setPreco(50.0);
-        // não precisa setar profissional e serviço aqui, depende do seu setup real
+        profServ.setProfissionalEntity(profissional);
+        profServ.setServicoEntity(servico);
+
+        dto = new ProfissionalServicoRequestDTO();
+        dto.setProfissionalId(1L);
+        dto.setServicoId(1L);
+        dto.setPreco(50.0);
     }
 
     // ---------- TESTE DO SAVE ----------
     @Test
     @DisplayName("Deve salvar ProfissionalServico com sucesso")
     void deveSalvarProfissionalServicoComSucesso() {
+        when(profissionalRepository.findById(1L)).thenReturn(Optional.of(profissional));
+        when(servicoRepository.findById(1L)).thenReturn(Optional.of(servico));
         when(profServRepository.save(any())).thenReturn(profServ);
 
-        ProfissionalServicoEntity salvo = profServService.save(profServ);
+        ProfissionalServicoEntity salvo = profServService.save(dto);
 
         assertNotNull(salvo);
         assertEquals(50.0, salvo.getPreco());
         verify(profServRepository, times(1)).save(any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao salvar quando profissional não existir")
+    void deveLancarExcecaoQuandoProfissionalNaoExisteNoSave() {
+        when(profissionalRepository.findById(1L)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> profServService.save(dto));
+        assertEquals("Profissional não encontrado", ex.getMessage());
     }
 
     // ---------- TESTE DO FIND BY ID ----------
@@ -72,22 +108,28 @@ class ProfissionalServicoServiceTest {
     @Test
     @DisplayName("Deve atualizar ProfissionalServico com sucesso")
     void deveAtualizarProfissionalServicoComSucesso() {
-        profServ.setPreco(60.0);
-        when(profServRepository.save(any())).thenReturn(profServ);
+        when(profServRepository.findById(1L)).thenReturn(Optional.of(profServ));
+        when(profissionalRepository.findById(1L)).thenReturn(Optional.of(profissional));
+        when(servicoRepository.findById(1L)).thenReturn(Optional.of(servico));
+        dto.setPreco(60.0);
+        ProfissionalServicoEntity salvo = new ProfissionalServicoEntity();
+        salvo.setId(1L);
+        salvo.setPreco(60.0);
+        when(profServRepository.save(any())).thenReturn(salvo);
 
-        ProfissionalServicoEntity atualizado = profServService.update(profServ);
+        ProfissionalServicoEntity atualizado = profServService.update(1L, dto);
 
         assertEquals(60.0, atualizado.getPreco());
         verify(profServRepository, times(1)).save(any());
     }
 
     @Test
-    @DisplayName("Deve lançar exceção ao atualizar sem ID")
-    void deveLancarExcecaoAoAtualizarSemId() {
-        ProfissionalServicoEntity novo = new ProfissionalServicoEntity(); // id null
+    @DisplayName("Deve lançar exceção ao atualizar ProfissionalServico inexistente")
+    void deveLancarExcecaoAoAtualizarProfissionalServicoInexistente() {
+        when(profServRepository.findById(99L)).thenReturn(Optional.empty());
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> profServService.update(novo));
-        assertEquals("ID do profissional serviço é obrigatório para update", ex.getMessage());
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> profServService.update(99L, dto));
+        assertEquals("Profissional Serviço não encontrado com ID: 99", ex.getMessage());
     }
 
     // ---------- TESTE DO DELETE (soft delete) ----------

@@ -1,14 +1,18 @@
 package com.barbearia.ph.controller;
 
+import com.barbearia.ph.dto.AgendamentoRequestDTO;
+import com.barbearia.ph.dto.AgendamentoResponseDTO;
+import com.barbearia.ph.dto.DtoMapper;
 import com.barbearia.ph.model.AgendamentoEntity;
+import com.barbearia.ph.security.AuthUtils;
 import com.barbearia.ph.service.AgendamentoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,8 +29,9 @@ public class AgendamentoController {
     private final AgendamentoService agendamentoService;
 
     @PostMapping
-    public ResponseEntity<AgendamentoEntity> save(@Valid @RequestBody AgendamentoEntity agendamento) {
-        return ResponseEntity.ok(agendamentoService.save(agendamento));
+    public ResponseEntity<AgendamentoResponseDTO> save(@Valid @RequestBody AgendamentoRequestDTO dto) {
+        AgendamentoEntity salvo = agendamentoService.save(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(DtoMapper.toResponse(salvo));
     }
 
     /**
@@ -38,13 +43,11 @@ public class AgendamentoController {
     @PutMapping("/{id}")
     public ResponseEntity<?> update(
             @PathVariable Long id,
-            @RequestBody AgendamentoEntity agendamentoEntity,
-            @AuthenticationPrincipal UserDetails user) {
+            @Valid @RequestBody AgendamentoRequestDTO dto,
+            Authentication user) {
         try {
-            boolean isAdmin = user != null && user.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            boolean isBarbeiro = user != null && user.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_BARBEIRO"));
+            boolean isAdmin = AuthUtils.isAdmin(user);
+            boolean isBarbeiro = AuthUtils.isBarbeiro(user);
 
             if (!isAdmin && !isBarbeiro) {
                 if (user == null) {
@@ -52,7 +55,7 @@ public class AgendamentoController {
                 }
 
                 AgendamentoEntity atual = agendamentoService.findById(id);
-                Long clienteId = agendamentoService.getClienteIdByCelular(user.getUsername());
+                Long clienteId = agendamentoService.getClienteIdByCelular(AuthUtils.celular(user));
                 if (!atual.getClienteEntity().getId().equals(clienteId)) {
                     return ResponseEntity.status(403).body("Você só pode editar seus próprios agendamentos.");
                 }
@@ -64,13 +67,14 @@ public class AgendamentoController {
                 }
 
                 // Cliente só reagenda data/horário — preço, serviço e profissional ficam como estavam
-                agendamentoEntity.setPreco(atual.getPreco());
-                agendamentoEntity.setObservacoes(atual.getObservacoes());
-                agendamentoEntity.setProfissionalServicoEntity(atual.getProfissionalServicoEntity());
+                dto.setPreco(atual.getPreco());
+                dto.setObservacoes(atual.getObservacoes());
+                dto.setProfissionalServicoId(atual.getProfissionalServicoEntity().getId());
+                dto.setClienteId(atual.getClienteEntity().getId());
             }
 
-            AgendamentoEntity resultado = agendamentoService.update(id, agendamentoEntity);
-            return ResponseEntity.ok(resultado);
+            AgendamentoEntity resultado = agendamentoService.update(id, dto);
+            return ResponseEntity.ok(DtoMapper.toResponse(resultado));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
@@ -88,7 +92,7 @@ public class AgendamentoController {
     public ResponseEntity<?> patchAgendamento(
             @PathVariable Long id,
             @RequestBody Map<String, Object> updates,
-            @AuthenticationPrincipal UserDetails user) {
+            Authentication user) {
 
         boolean isCancelamento = updates.containsKey("status")
                 && "CANCELADO".equalsIgnoreCase(updates.get("status").toString());
@@ -99,15 +103,13 @@ public class AgendamentoController {
             if (user == null) {
                 return ResponseEntity.status(401).body("Autenticação necessária.");
             }
-            boolean isAdmin = user.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            boolean isBarbeiro = user.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_BARBEIRO"));
+            boolean isAdmin = AuthUtils.isAdmin(user);
+            boolean isBarbeiro = AuthUtils.isBarbeiro(user);
 
             if (isBarbeiro) {
                 // Barbeiro confirma na hora que quiser, mas só do que é dele
                 try {
-                    Long profissionalId = agendamentoService.getProfissionalIdByCelular(user.getUsername());
+                    Long profissionalId = agendamentoService.getProfissionalIdByCelular(AuthUtils.celular(user));
                     AgendamentoEntity ag = agendamentoService.findById(id);
                     if (!ag.getProfissionalServicoEntity().getProfissionalEntity().getId().equals(profissionalId)) {
                         return ResponseEntity.status(403)
@@ -134,15 +136,13 @@ public class AgendamentoController {
         }
 
         if (isCancelamento && user != null) {
-            boolean isAdmin = user.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            boolean isBarbeiro = user.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_BARBEIRO"));
+            boolean isAdmin = AuthUtils.isAdmin(user);
+            boolean isBarbeiro = AuthUtils.isBarbeiro(user);
 
             if (isBarbeiro) {
                 // Barbeiro só pode cancelar agendamentos vinculados a ele
                 try {
-                    Long profissionalId = agendamentoService.getProfissionalIdByCelular(user.getUsername());
+                    Long profissionalId = agendamentoService.getProfissionalIdByCelular(AuthUtils.celular(user));
                     AgendamentoEntity ag = agendamentoService.findById(id);
                     if (!ag.getProfissionalServicoEntity().getProfissionalEntity().getId().equals(profissionalId)) {
                         return ResponseEntity.status(403)
@@ -154,7 +154,7 @@ public class AgendamentoController {
             } else if (!isAdmin) {
                 // Cliente só pode cancelar o próprio agendamento
                 try {
-                    Long clienteId = agendamentoService.getClienteIdByCelular(user.getUsername());
+                    Long clienteId = agendamentoService.getClienteIdByCelular(AuthUtils.celular(user));
                     AgendamentoEntity ag = agendamentoService.findById(id);
                     if (!ag.getClienteEntity().getId().equals(clienteId)) {
                         return ResponseEntity.status(403)
@@ -167,46 +167,45 @@ public class AgendamentoController {
         }
 
         return agendamentoService.patch(id, updates)
+                .map(DtoMapper::toResponse)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
-    public ResponseEntity<?> findAll(
-            @AuthenticationPrincipal UserDetails user) {
+    public ResponseEntity<?> findAll(Authentication user) {
 
         if (user == null) {
             return ResponseEntity.status(401).body("Autenticação necessária para listar agendamentos.");
         }
 
-        boolean isAdmin = user.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        boolean isBarbeiro = user.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_BARBEIRO"));
+        boolean isAdmin = AuthUtils.isAdmin(user);
+        boolean isBarbeiro = AuthUtils.isBarbeiro(user);
 
+        List<AgendamentoResponseDTO> result;
         if (isAdmin) {
-            return ResponseEntity.ok(agendamentoService.findAllWithDetails());
+            result = agendamentoService.findAllWithDetails().stream()
+                    .map(DtoMapper::toResponse).toList();
         } else if (isBarbeiro) {
-            Long profissionalId = agendamentoService.getProfissionalIdByCelular(user.getUsername());
-            return ResponseEntity.ok(agendamentoService.findAllWithDetails()
+            Long profissionalId = agendamentoService.getProfissionalIdByCelular(AuthUtils.celular(user));
+            result = agendamentoService.findAllWithDetails()
                     .stream()
                     .filter(a -> a.getProfissionalServicoEntity().getProfissionalEntity().getId().equals(profissionalId))
-                    .toList());
+                    .map(DtoMapper::toResponse).toList();
         } else {
-            Long clienteId = agendamentoService.getClienteIdByCelular(user.getUsername());
-            return ResponseEntity.ok(agendamentoService.findAllWithDetails()
-                    .stream()
+            Long clienteId = agendamentoService.getClienteIdByCelular(AuthUtils.celular(user));
+            result = agendamentoService.findAllWithDetails().stream()
                     .filter(a -> a.getClienteEntity().getId().equals(clienteId))
-                    .toList());
+                    .map(DtoMapper::toResponse).toList();
         }
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AgendamentoEntity> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(agendamentoService.findById(id));
+    public ResponseEntity<AgendamentoResponseDTO> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(DtoMapper.toResponse(agendamentoService.findById(id)));
     }
 
-    // DELETE restrito a ADMIN — para exclusão definitiva quando necessário
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> delete(@PathVariable Long id) {
@@ -215,9 +214,10 @@ public class AgendamentoController {
     }
 
     @GetMapping("/data")
-    public ResponseEntity<List<AgendamentoEntity>> findByData(@RequestParam String data) {
-        LocalDate localDate = LocalDate.parse(data);
-        return ResponseEntity.ok(agendamentoService.findByData(localDate));
+    public ResponseEntity<List<AgendamentoResponseDTO>> findByData(@RequestParam String data) {
+        List<AgendamentoResponseDTO> result = agendamentoService.findByData(LocalDate.parse(data)).stream()
+                .map(DtoMapper::toResponse).toList();
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -242,17 +242,20 @@ public class AgendamentoController {
 
     @GetMapping("/cliente/{clienteId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<AgendamentoEntity>> findByCliente(@PathVariable Long clienteId) {
-        return ResponseEntity.ok(agendamentoService.findByCliente(clienteId));
+    public ResponseEntity<List<AgendamentoResponseDTO>> findByCliente(@PathVariable Long clienteId) {
+        List<AgendamentoResponseDTO> result = agendamentoService.findByCliente(clienteId).stream()
+                .map(DtoMapper::toResponse).toList();
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/periodo")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<AgendamentoEntity>> findByPeriodo(
+    public ResponseEntity<List<AgendamentoResponseDTO>> findByPeriodo(
             @RequestParam String dataInicio,
             @RequestParam String dataFim) {
-        LocalDate inicio = LocalDate.parse(dataInicio);
-        LocalDate fim = LocalDate.parse(dataFim);
-        return ResponseEntity.ok(agendamentoService.findByPeriodo(inicio, fim));
+        List<AgendamentoResponseDTO> result = agendamentoService.findByPeriodo(
+                LocalDate.parse(dataInicio), LocalDate.parse(dataFim)).stream()
+                .map(DtoMapper::toResponse).toList();
+        return ResponseEntity.ok(result);
     }
 }

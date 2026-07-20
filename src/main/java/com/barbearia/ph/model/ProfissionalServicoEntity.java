@@ -15,6 +15,7 @@ import java.util.List;
 @Entity
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Table(name = "profissional_servico")
 public class ProfissionalServicoEntity {
 
     @Id
