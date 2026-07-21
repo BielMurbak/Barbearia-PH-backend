@@ -226,13 +226,21 @@ public class AgendamentoService {
     }
 
     public Long getClienteIdByCelular(String celular) {
-        ClienteEntity cliente = clienteRepository.findByCelular(celular)
+        // O username no Keycloak é só números (ex: 4598573445), mas o celular
+        // salvo no banco vem formatado (ex: "(45) 9857-3445") — compara só os dígitos.
+        String digitsOnly = celular == null ? "" : celular.replaceAll("\\D", "");
+        ClienteEntity cliente = clienteRepository.findAll().stream()
+                .filter(c -> c.getCelular() != null && c.getCelular().replaceAll("\\D", "").equals(digitsOnly))
+                .findFirst()
                 .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
         return cliente.getId();
     }
 
     public Long getProfissionalIdByCelular(String celular) {
-        ProfissionalEntity profissional = profissionalRepository.findByCelular(celular)
+        String digitsOnly = celular == null ? "" : celular.replaceAll("\\D", "");
+        ProfissionalEntity profissional = profissionalRepository.findAll().stream()
+                .filter(p -> p.getCelular() != null && p.getCelular().replaceAll("\\D", "").equals(digitsOnly))
+                .findFirst()
                 .orElseThrow(() -> new RuntimeException("Profissional não encontrado"));
         return profissional.getId();
     }
