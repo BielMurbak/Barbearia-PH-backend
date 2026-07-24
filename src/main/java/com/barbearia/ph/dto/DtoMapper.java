@@ -35,6 +35,7 @@ public class DtoMapper {
         dto.setCelular(e.getCelular());
         dto.setNomeCompleto(e.getNomeCompleto());
         dto.setEspecializacao(e.getEspecializacao());
+        dto.setRole(e.getRole());
         return dto;
     }
 
@@ -45,6 +46,10 @@ public class DtoMapper {
         e.setCelular(dto.getCelular());
         e.setSenha(dto.getSenha());
         e.setEspecializacao(dto.getEspecializacao());
+        // Este endpoint só é usado pelo admin pra cadastrar membros da equipe —
+        // nunca pra criar outro admin — então força ROLE_BARBEIRO em vez de
+        // herdar o default ROLE_ADMIN da entidade.
+        e.setRole(Role.ROLE_BARBEIRO);
         return e;
     }
 

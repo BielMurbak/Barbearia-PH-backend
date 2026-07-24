@@ -1,6 +1,7 @@
 package com.barbearia.ph.dto;
 
 import com.barbearia.ph.model.Especializacao;
+import com.barbearia.ph.model.Role;
 import lombok.Data;
 
 @Data
@@ -12,4 +13,5 @@ public class ProfissionalResponseDTO {
     private String celular;
     private String nomeCompleto;
     private Especializacao especializacao;
+    private Role role;
 }
